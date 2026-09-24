@@ -1,5 +1,10 @@
+<?php
+
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\CartController;
+
+// Root -> halaman kasir
+Route::get('/', fn () => redirect()->route('cashier.index'));
 
 // Manajemen Produk
 Route::resource('products', ProductController::class);

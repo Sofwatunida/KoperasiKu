@@ -6,8 +6,7 @@
     <title>Sistem Kasir Laravel</title>
     
     <!-- Bootstrap 5 CSS (Instan & Rapi) -->
-    <link href="https://jsdelivr.net" rel="stylesheet">
-    <link href="https://jsdelivr.net" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     
     <style>
         body {
@@ -30,10 +29,10 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
-                        <a class="nav-link {{ Request::is('cashier*') ? 'active' : '' }}" href="{{ route('cashier.index') }}">🛒 Transaksi Kasir</a>
+                        <a class="nav-link {{ request()->is('cashier*') ? 'active' : '' }}" href="{{ route('cashier.index') }}">🛒 Transaksi Kasir</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {{ Request::is('products*') ? 'active' : '' }}" href="{{ route('products.index') }}">📦 Manajemen Produk</a>
+                        <a class="nav-link {{ request()->is('products*') ? 'active' : '' }}" href="{{ route('products.index') }}">📦 Manajemen Produk</a>
                     </li>
                 </ul>
             </div>
@@ -63,6 +62,6 @@
     </main>
 
     <!-- Bootstrap 5 JS Bundle (Untuk interaksi tombol, dropdown, dan alert) -->
-    <script src="https://jsdelivr.net"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

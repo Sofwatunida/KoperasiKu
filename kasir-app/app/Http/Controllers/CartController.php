@@ -1,3 +1,5 @@
+<?php
+
 namespace App\Http\Controllers;
 
 use App\Models\Product;
@@ -58,6 +60,10 @@ class CartController extends Controller
         $cart = session()->get('cart', []);
         if(empty($cart)) return redirect()->back()->with('error', 'Keranjang kosong!');
 
+        $request->validate([
+            'pay_amount' => 'required|numeric|min:0'
+        ]);
+
         $total = 0;
         foreach($cart as $item) {
             $total += $item['price'] * $item['quantity'];
@@ -78,7 +84,8 @@ class CartController extends Controller
             'invoice_number' => 'INV-' . time(),
             'total_price' => $total,
             'pay_amount' => $request->pay_amount,
-            'items' => json_encode($cart)
+            'change_amount' => $request->pay_amount - $total,
+            'items' => $cart
         ]);
 
         session()->forget('cart');
@@ -88,7 +95,6 @@ class CartController extends Controller
 
     public function receipt($id) {
         $transaction = Transaction::findOrFail($id);
-        $transaction->items = json_decode($transaction->items, true);
         return view('cashier.receipt', compact('transaction'));
     }
 }
