@@ -13,8 +13,7 @@ return new class extends Migration
             $table->string('invoice_number')->unique();
             $table->integer('total_price');
             $table->integer('pay_amount');
-            $table->integer('change_amount')->nullable();
-            $table->json('items');
+            $table->integer('change_amount');
             $table->timestamps();
         });
     }

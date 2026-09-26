@@ -22,7 +22,7 @@
     <!-- Navigasi / Navbar Utama -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
         <div class="container">
-            <a class="navbar-brand" href="{{ route('cashier.index') }}">🏪 KasirKita</a>
+            <a class="navbar-brand" href="{{ route('cashier.index') }}">🏪 Toko Kita Jaya</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -33,6 +33,9 @@
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {{ request()->is('products*') ? 'active' : '' }}" href="{{ route('products.index') }}">📦 Manajemen Produk</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->is('transactions*') ? 'active' : '' }}" href="{{ route('transactions.index') }}">🧾 Riwayat Transaksi</a>
                     </li>
                 </ul>
             </div>
@@ -63,5 +66,6 @@
 
     <!-- Bootstrap 5 JS Bundle (Untuk interaksi tombol, dropdown, dan alert) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    @stack('scripts')
 </body>
 </html>

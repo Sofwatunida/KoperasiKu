@@ -4,97 +4,79 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use App\Models\Transaction;
+use App\Models\TransactionDetail;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class CartController extends Controller
 {
-    public function index() {
+    public function index()
+    {
         $products = Product::where('stock', '>', 0)->get();
-        $cart = session()->get('cart', []);
-        
-        $total = 0;
-        foreach($cart as $item) {
-            $total += $item['price'] * $item['quantity'];
-        }
 
-        return view('cashier.index', compact('products', 'cart', 'total'));
+        return view('cashier.index', compact('products'));
     }
 
-    public function add($id) {
-        $product = Product::findOrFail($id);
-        $cart = session()->get('cart', []);
-
-        if(isset($cart[$id])) {
-            $cart[$id]['quantity']++;
-        } else {
-            $cart[$id] = [
-                "name" => $product->name,
-                "quantity" => 1,
-                "price" => $product->price
-            ];
-        }
-
-        session()->put('cart', $cart);
-        return redirect()->back();
-    }
-
-    public function updateCart(Request $request) {
-        $cart = session()->get('cart', []);
-        if($request->id && $request->quantity) {
-            $cart[$request->id]["quantity"] = $request->quantity;
-            session()->put('cart', $cart);
-        }
-        return redirect()->back();
-    }
-
-    public function remove($id) {
-        $cart = session()->get('cart', []);
-        if(isset($cart[$id])) {
-            unset($cart[$id]);
-            session()->put('cart', $cart);
-        }
-        return redirect()->back();
-    }
-
-    public function checkout(Request $request) {
-        $cart = session()->get('cart', []);
-        if(empty($cart)) return redirect()->back()->with('error', 'Keranjang kosong!');
-
+    public function checkout(Request $request)
+    {
         $request->validate([
-            'pay_amount' => 'required|numeric|min:0'
+            'cart' => 'required|json',
+            'pay_amount' => 'required|numeric|min:0',
+            'total_price' => 'required|numeric|min:0',
         ]);
 
-        $total = 0;
-        foreach($cart as $item) {
-            $total += $item['price'] * $item['quantity'];
+        $cartData = json_decode($request->cart, true);
+
+        if (empty($cartData)) {
+            return redirect()->back()->with('error', 'Keranjang masih kosong.');
         }
 
-        if($request->pay_amount < $total) {
+        if ($request->pay_amount < $request->total_price) {
             return redirect()->back()->with('error', 'Uang pembayaran kurang!');
         }
 
-        // Potong stok produk
-        foreach($cart as $id => $item) {
-            $product = Product::find($id);
-            $product->decrement('stock', $item['quantity']);
-        }
+        $transaction = DB::transaction(function () use ($request, $cartData) {
+            // 1. Simpan Transaksi Utama
+            $transaction = Transaction::create([
+                'invoice_number' => 'INV-'.time(),
+                'total_price' => $request->total_price,
+                'pay_amount' => $request->pay_amount,
+                'change_amount' => $request->pay_amount - $request->total_price,
+            ]);
 
-        // Simpan transaksi
-        $transaction = Transaction::create([
-            'invoice_number' => 'INV-' . time(),
-            'total_price' => $total,
-            'pay_amount' => $request->pay_amount,
-            'change_amount' => $request->pay_amount - $total,
-            'items' => $cart
-        ]);
+            // 2. Simpan Detail & Kurangi Stok
+            foreach ($cartData as $item) {
+                $product = Product::find($item['id']);
 
-        session()->forget('cart');
+                if (! $product) {
+                    continue;
+                }
+
+                if ($item['qty'] > $product->stock) {
+                    throw new \Exception("Stok produk {$product->name} tidak mencukupi.");
+                }
+
+                TransactionDetail::create([
+                    'transaction_id' => $transaction->id,
+                    'product_id' => $product->id,
+                    'quantity' => $item['qty'],
+                    'price' => $product->price,
+                    'subtotal' => $product->price * $item['qty'],
+                ]);
+
+                $product->decrement('stock', $item['qty']);
+            }
+
+            return $transaction;
+        });
 
         return redirect()->route('cashier.receipt', $transaction->id);
     }
 
-    public function receipt($id) {
-        $transaction = Transaction::findOrFail($id);
+    public function receipt(Transaction $transaction)
+    {
+        $transaction->load('details.product');
+
         return view('cashier.receipt', compact('transaction'));
     }
 }
