@@ -1,10 +1,15 @@
-@extends('layouts.app')
+@extends('layouts.custom')
+
+@section('title', 'Manajemen Produk')
 
 @section('content')
 <div class="container bg-white p-4 rounded shadow-sm">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>Manajemen Produk</h2>
-        <a href="{{ route('cashier.index') }}" class="btn btn-secondary">Ke Halaman Kasir &rarr;</a>
+        <div>
+            <a href="{{ route('products.create') }}" class="btn btn-primary">+ Tambah Produk</a>
+            <a href="{{ route('cashier.index') }}" class="btn btn-secondary">Ke Halaman Kasir &rarr;</a>
+        </div>
     </div>
 
     <!-- Form Tambah Produk -->
@@ -48,6 +53,8 @@
                     <input type="number" name="stock" value="{{ $product->stock }}" class="form-control form-control-sm" form="update-form-{{ $product->id }}">
                 </td>
                 <td>
+                    <a href="{{ route('products.edit', $product->id) }}" class="btn btn-warning btn-sm">Edit</a>
+
                     <form id="update-form-{{ $product->id }}" action="{{ route('products.update', $product->id) }}" method="POST" class="d-inline">
                         @csrf @method('PUT')
                         <button type="submit" class="btn btn-success btn-sm">Simpan</button>

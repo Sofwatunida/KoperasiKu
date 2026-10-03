@@ -1,4 +1,6 @@
-@extends('layouts.app')
+@extends('layouts.custom')
+
+@section('title', 'Kasir Digital')
 
 @section('content')
 <div class="container-fluid">

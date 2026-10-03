@@ -1,4 +1,6 @@
-@extends('layouts.app')
+@extends('layouts.custom')
+
+@section('title', 'Riwayat Transaksi')
 
 @section('content')
 <div class="container bg-white p-4 rounded shadow-sm">
@@ -33,6 +35,7 @@
                 <td class="text-end">Rp {{ number_format($transaction->pay_amount) }}</td>
                 <td class="text-end">Rp {{ number_format($transaction->change_amount) }}</td>
                 <td>
+                    <a href="{{ route('transactions.show', $transaction->id) }}" class="btn btn-sm btn-outline-secondary">Detail</a>
                     <a href="{{ route('cashier.receipt', $transaction->id) }}" class="btn btn-sm btn-outline-primary">Cetak Struk</a>
                 </td>
             </tr>

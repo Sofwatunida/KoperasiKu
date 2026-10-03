@@ -1,19 +1,17 @@
 <?php
 
-namespace Tests\Feature;
+it('redirects the home page to the cashier page', function () {
+    $this->get('/')->assertRedirect(route('cashier.index'));
+});
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
+it('redirects guests to the login page', function () {
+    $this->get(route('dashboard'))->assertRedirect(route('login'));
+});
 
-class ExampleTest extends TestCase
-{
-    use RefreshDatabase;
+it('renders the login page', function () {
+    $this->get(route('login'))->assertStatus(200);
+});
 
-    /**
-     * A basic test example.
-     */
-    public function test_the_application_returns_a_successful_response(): void
-    {
-        $this->get(route('cashier.index'))->assertStatus(200);
-    }
-}
+it('renders the register page', function () {
+    $this->get(route('register'))->assertStatus(200);
+});
