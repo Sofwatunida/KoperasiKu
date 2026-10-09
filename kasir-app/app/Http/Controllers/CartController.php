@@ -5,78 +5,142 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use App\Models\Transaction;
 use App\Models\TransactionDetail;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use Illuminate\View\View;
+use RuntimeException;
 
 class CartController extends Controller
 {
-    public function index()
+    public function index(): View
     {
-        $products = Product::where('stock', '>', 0)->get();
+        $keyword = request()->string('search')->trim()->toString();
 
-        return view('cashier.index', compact('products'));
+        $products = Product::query()
+            ->search($keyword)
+            ->orderBy('code')
+            ->get();
+
+        return view('cashier.index', [
+            'products' => $products,
+            'search' => $keyword,
+        ]);
     }
 
-    public function checkout(Request $request)
+    public function checkout(Request $request): RedirectResponse
     {
-        $request->validate([
-            'cart' => 'required|json',
-            'pay_amount' => 'required|numeric|min:0',
-            'total_price' => 'required|numeric|min:0',
+        $validated = $request->validate([
+            'cart' => ['required', 'array', 'min:1'],
+            'cart.*.id' => ['required', 'integer', 'exists:products,id'],
+            'cart.*.quantity' => ['required', 'integer', 'min:1'],
+            'paid' => ['required', 'integer', 'min:0'],
+        ], [
+            'cart.required' => 'Keranjang masih kosong.',
+            'cart.min' => 'Keranjang masih kosong.',
+            'paid.required' => 'Uang pembayaran wajib diisi.',
         ]);
 
-        $cartData = json_decode($request->cart, true);
+        $items = collect($validated['cart'])
+            ->groupBy('id')
+            ->map(fn ($productItems, $id) => [
+                'id' => (int) $id,
+                'quantity' => (int) $productItems->sum('quantity'),
+            ])
+            ->values();
 
-        if (empty($cartData)) {
-            return redirect()->back()->with('error', 'Keranjang masih kosong.');
-        }
+        try {
+            $transaction = DB::transaction(function () use ($items, $validated) {
+                $products = Product::query()
+                    ->whereIn('id', $items->pluck('id'))
+                    ->lockForUpdate()
+                    ->get()
+                    ->keyBy('id');
 
-        if ($request->pay_amount < $request->total_price) {
-            return redirect()->back()->with('error', 'Uang pembayaran kurang!');
-        }
+                $total = 0;
+                $rows = [];
 
-        $transaction = DB::transaction(function () use ($request, $cartData) {
-            // 1. Simpan Transaksi Utama
-            $transaction = Transaction::create([
-                'invoice_number' => 'INV-'.time(),
-                'total_price' => $request->total_price,
-                'pay_amount' => $request->pay_amount,
-                'change_amount' => $request->pay_amount - $request->total_price,
-            ]);
+                foreach ($items as $item) {
+                    $product = $products->get($item['id']);
 
-            // 2. Simpan Detail & Kurangi Stok
-            foreach ($cartData as $item) {
-                $product = Product::find($item['id']);
+                    if (! $product) {
+                        continue;
+                    }
 
-                if (! $product) {
-                    continue;
+                    if ($item['quantity'] > $product->stock) {
+                        throw new RuntimeException("Stok {$product->name} tidak mencukupi.");
+                    }
+
+                    $subtotal = $product->selling_price * $item['quantity'];
+                    $total += $subtotal;
+
+                    $rows[] = [
+                        'product' => $product,
+                        'quantity' => $item['quantity'],
+                        'price' => $product->selling_price,
+                        'subtotal' => $subtotal,
+                    ];
                 }
 
-                if ($item['qty'] > $product->stock) {
-                    throw new \Exception("Stok produk {$product->name} tidak mencukupi.");
+                if ($rows === []) {
+                    throw new RuntimeException('Keranjang masih kosong.');
                 }
 
-                TransactionDetail::create([
-                    'transaction_id' => $transaction->id,
-                    'product_id' => $product->id,
-                    'quantity' => $item['qty'],
-                    'price' => $product->price,
-                    'subtotal' => $product->price * $item['qty'],
+                $paid = (int) $validated['paid'];
+
+                if ($paid < $total) {
+                    throw new RuntimeException('Jumlah pembayaran tidak mencukupi.');
+                }
+
+                $transaction = Transaction::create([
+                    'transaction_code' => self::kodeBerikutnya(),
+                    'user_id' => Auth::id(),
+                    'total' => $total,
+                    'paid' => $paid,
+                    'change' => $paid - $total,
+                    'transaction_date' => Carbon::now(),
                 ]);
 
-                $product->decrement('stock', $item['qty']);
-            }
+                foreach ($rows as $row) {
+                    TransactionDetail::create([
+                        'transaction_id' => $transaction->id,
+                        'product_id' => $row['product']->id,
+                        'quantity' => $row['quantity'],
+                        'price' => $row['price'],
+                        'subtotal' => $row['subtotal'],
+                    ]);
 
-            return $transaction;
-        });
+                    // Stok benar-benar dikurangi di database.
+                    $row['product']->decrement('stock', $row['quantity']);
+                }
 
-        return redirect()->route('cashier.receipt', $transaction->id);
+                return $transaction;
+            });
+        } catch (RuntimeException $exception) {
+            return back()->withInput()->with('error', $exception->getMessage());
+        }
+
+        return redirect()->route('cashier.receipt', $transaction->id)
+            ->with('success', 'Transaksi berhasil disimpan.');
     }
 
-    public function receipt(Transaction $transaction)
+    public function receipt(Transaction $transaction): View
     {
-        $transaction->load('details.product');
+        $transaction->load(['details.product', 'user']);
 
         return view('cashier.receipt', compact('transaction'));
+    }
+
+    /**
+     * Nomor transaksi berikutnya, contoh: TRX-0005.
+     */
+    private static function kodeBerikutnya(): string
+    {
+        $nextId = (int) Transaction::max('id') + 1;
+
+        return 'TRX-'.Str::padLeft((string) $nextId, 4, '0');
     }
 }

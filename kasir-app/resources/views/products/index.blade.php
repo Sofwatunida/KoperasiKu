@@ -1,70 +1,33 @@
 @extends('layouts.app')
 
+@section('title', 'Produk')
+
 @section('content')
-<div class="container bg-white p-4 rounded shadow-sm">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>Manajemen Produk</h2>
-        <a href="{{ route('cashier.index') }}" class="btn btn-secondary">Ke Halaman Kasir &rarr;</a>
+    <div class="mb-6 flex flex-wrap items-end justify-between gap-4">
+        <div><h1 class="page-title">Data Produk</h1><p class="page-subtitle">Kelola katalog, harga, dan stok koperasi.</p></div>
+        <a class="btn-primary" href="{{ route('products.create') }}"><span aria-hidden="true">+</span> Tambah Produk</a>
     </div>
-
-    <!-- Form Tambah Produk -->
-    <form action="{{ route('products.store') }}" method="POST" class="row g-3 mb-4 p-3 bg-light rounded">
-        @csrf
-        <h4>Tambah Produk Baru</h4>
-        <div class="col-md-4">
-            <input type="text" name="name" class="form-control" placeholder="Nama Produk" required>
+    <section class="card">
+        <div class="card-header">
+            <div><h2 class="card-title">Daftar Produk</h2><p class="mt-1 text-xs text-muted">{{ number_format($totalProduk, 0, ',', '.') }} produk terdaftar</p></div>
+            <form action="{{ route('products.index') }}" method="get" class="flex w-full gap-2 sm:w-auto">
+                @if ($stokRendah) <input type="hidden" name="stok_rendah" value="1"> @endif
+                <label class="sr-only" for="product-search">Cari nama atau kode produk</label><input class="input min-w-0 sm:w-72" id="product-search" name="search" value="{{ $search }}" placeholder="Cari nama atau kode produk..."><button class="btn-secondary" type="submit">Cari</button>
+                @if ($search || $stokRendah) <a class="btn-ghost" href="{{ route('products.index') }}">Reset</a> @endif
+            </form>
         </div>
-        <div class="col-md-3">
-            <input type="number" name="price" class="form-control" placeholder="Harga" required>
-        </div>
-        <div class="col-md-3">
-            <input type="number" name="stock" class="form-control" placeholder="Stok Awal" required>
-        </div>
-        <div class="col-md-2">
-            <button type="submit" class="btn btn-primary w-100">Tambah</button>
-        </div>
-    </form>
-
-    <!-- Tabel Produk -->
-    <table class="table table-bordered">
-        <thead>
-            <tr>
-                <th>Nama</th>
-                <th>Harga</th>
-                <th>Stok</th>
-                <th>Aksi</th>
-            </tr>
-        </thead>
-        <tbody>
-            @forelse($products as $product)
-            <tr>
-                <td>
-                    <input type="text" name="name" value="{{ $product->name }}" class="form-control form-control-sm" form="update-form-{{ $product->id }}">
-                </td>
-                <td>
-                    <input type="number" name="price" value="{{ $product->price }}" class="form-control form-control-sm" form="update-form-{{ $product->id }}">
-                </td>
-                <td>
-                    <input type="number" name="stock" value="{{ $product->stock }}" class="form-control form-control-sm" form="update-form-{{ $product->id }}">
-                </td>
-                <td>
-                    <form id="update-form-{{ $product->id }}" action="{{ route('products.update', $product->id) }}" method="POST" class="d-inline">
-                        @csrf @method('PUT')
-                        <button type="submit" class="btn btn-success btn-sm">Simpan</button>
-                    </form>
-
-                    <form action="{{ route('products.destroy', $product->id) }}" method="POST" class="d-inline">
-                        @csrf @method('DELETE')
-                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Hapus produk ini?')">Hapus</button>
-                    </form>
-                </td>
-            </tr>
+        @if ($stokRendah) <p class="border-b border-line bg-warning-soft px-5 py-3 text-sm font-medium text-ink">Menampilkan produk dengan stok {{ \App\Models\Product::LOW_STOCK_THRESHOLD }} atau kurang.</p> @endif
+        <div class="table-wrap"><table class="table"><thead><tr><th>Kode</th><th>Nama Produk</th><th>Harga Jual</th><th>Stok</th><th>Satuan</th><th>Status</th><th>Aksi</th></tr></thead><tbody>
+            @forelse ($products as $product)
+                <tr>
+                    <td class="font-medium text-muted">{{ $product->code }}</td><td class="font-semibold">{{ $product->name }}</td><td class="tabular">Rp{{ number_format($product->selling_price, 0, ',', '.') }}</td><td class="tabular">{{ number_format($product->stock, 0, ',', '.') }}</td><td>{{ $product->unit }}</td>
+                    <td><span @class(['badge-success' => $product->stock_status === 'normal', 'badge-warning' => $product->stock_status === 'rendah', 'badge-danger' => $product->stock_status === 'habis'])>{{ $product->stock_status_label }}</span></td>
+                    <td><div class="flex items-center gap-2"><a class="btn-secondary btn-sm" href="{{ route('products.edit', $product) }}">Edit</a><form action="{{ route('products.destroy', $product) }}" method="post" onsubmit="return confirm('Apakah Anda yakin ingin menghapus produk ini?')">@csrf @method('DELETE')<button class="btn-ghost btn-sm text-danger" type="submit">Hapus</button></form></div></td>
+                </tr>
             @empty
-            <tr>
-                <td colspan="4" class="text-center text-muted">Belum ada produk. Silakan tambahkan produk baru di atas.</td>
-            </tr>
+                <tr><td colspan="7" class="py-12 text-center"><p class="font-medium">{{ $search ? 'Produk tidak ditemukan.' : 'Belum ada produk.' }}</p><p class="mt-1 text-sm text-muted">{{ $search ? 'Coba kata kunci lain.' : 'Tambahkan produk pertama koperasi.' }}</p></td></tr>
             @endforelse
-        </tbody>
-    </table>
-</div>
+        </tbody></table></div>
+        @if ($products->hasPages()) <div class="border-t border-line px-5 py-4">{{ $products->links() }}</div> @endif
+    </section>
 @endsection

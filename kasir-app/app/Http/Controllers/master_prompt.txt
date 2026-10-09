@@ -1,0 +1,1534 @@
+ 
+
+
+
+
+
+
+
+MASTER PROMPT — KOPERASIKU
+============================================================
+
+Saya ingin mengembangkan aplikasi web bernama:
+
+KOPERASIKU
+"Sistem Kasir & Manajemen Koperasi"
+
+Saya sudah memberikan GAMBAR REFERENSI UI sebagai acuan utama.
+
+TUGAS UTAMA:
+Kembangkan/perbaiki project yang sedang terbuka ini menjadi aplikasi KoperasiKu yang memiliki tampilan dan pengalaman penggunaan SEMIRIP MUNGKIN dengan gambar referensi, tetapi tetap menggunakan branding KoperasiKu.
+
+JANGAN membuat project baru dari nol jika project ini sudah memiliki struktur dan kode yang berjalan.
+
+JANGAN menghapus fitur yang sudah berfungsi.
+
+Sebelum melakukan perubahan, baca dan pahami terlebih dahulu struktur project yang sekarang.
+
+============================================================
+1. WAJIB CEK PROJECT TERLEBIH DAHULU
+============================================================
+
+Sebelum menulis atau mengubah kode:
+
+1. Periksa struktur folder project.
+2. Identifikasi framework yang digunakan.
+3. Identifikasi bahasa pemrograman yang digunakan.
+4. Identifikasi database yang digunakan.
+5. Periksa package.json/composer.json atau konfigurasi project yang tersedia.
+6. Periksa routes.
+7. Periksa Controller.
+8. Periksa Model.
+9. Periksa migration.
+10. Periksa View/Blade/Component.
+11. Periksa CSS.
+12. Periksa JavaScript.
+13. Periksa fitur yang sudah tersedia.
+14. Periksa halaman yang sudah dibuat.
+15. Periksa apakah ada kode yang sudah terhubung ke database.
+
+JANGAN mengganti framework atau teknologi yang sudah digunakan tanpa alasan yang jelas.
+
+Gunakan teknologi yang sudah digunakan project ini.
+
+Jika suatu fitur sudah tersedia, PERBAIKI dan kembangkan fitur tersebut daripada membuat versi kedua yang duplikat.
+
+============================================================
+2. IDENTITAS APLIKASI
+============================================================
+
+Nama aplikasi:
+
+KoperasiKu
+
+Subtitle:
+
+Sistem Kasir & Manajemen Koperasi
+
+Branding harus konsisten menggunakan:
+
+KoperasiKu
+
+JANGAN menggunakan:
+- TokoPOS
+- nama aplikasi lain
+- branding lain
+
+Nama KoperasiKu harus digunakan pada:
+- Login
+- Sidebar
+- Dashboard
+- Header
+- Struk
+- Laporan
+- Title halaman
+- Footer jika ada
+
+============================================================
+3. DESAIN UI/UX
+============================================================
+
+Gunakan gambar referensi yang saya berikan sebagai ACUAN VISUAL UTAMA.
+
+Saya ingin desain aplikasi sangat dekat dengan referensi, terutama:
+
+- struktur layout
+- sidebar kiri
+- header
+- dashboard
+- card statistik
+- tabel
+- form
+- tombol
+- modal
+- spacing
+- border
+- radius
+- icon
+- halaman kasir
+- keranjang
+- pembayaran
+- struk
+- laporan
+- detail transaksi
+
+Jangan hanya mengambil konsep umumnya.
+
+Ikuti komposisi visual dan proporsi referensi sedekat mungkin.
+
+Namun:
+- jangan menyalin logo KoperasiKu dari gambar secara mentah
+- gunakan branding KoperasiKu
+- gunakan asset/icon yang legal dan tersedia di project
+- jangan membuat tampilan identik dengan brand lain
+
+============================================================
+4. DESIGN SYSTEM / WARNA
+============================================================
+
+SEMUA HALAMAN WAJIB menggunakan sistem warna yang sama.
+
+Gunakan palet:
+
+Primary Blue:
+#2563EB
+
+Dark Navy:
+#0F172A
+
+Background:
+#F8FAFC
+
+White:
+#FFFFFF
+
+Border:
+#E2E8F0
+
+Text Primary:
+#0F172A
+
+Text Secondary:
+#64748B
+
+Success:
+#16A34A
+
+Danger:
+#DC2626
+
+Warning:
+#F59E0B
+
+Penggunaan:
+
+#2563EB
+→ tombol utama
+→ menu aktif
+→ link
+→ tombol tambah
+→ tombol simpan
+→ tombol cetak
+→ elemen interaktif utama
+
+#0F172A
+→ sidebar
+→ branding sidebar
+→ teks penting
+
+#F8FAFC
+→ background halaman
+
+#FFFFFF
+→ card
+→ tabel
+→ form
+→ modal
+→ content
+
+#E2E8F0
+→ border
+→ divider
+
+#16A34A
+→ berhasil
+→ pembayaran berhasil
+→ status positif
+
+#DC2626
+→ hapus
+→ error
+→ stok habis
+
+#F59E0B
+→ warning
+→ stok rendah
+
+ATURAN:
+
+- Jangan menggunakan warna ungu sebagai warna utama.
+- Jangan menggunakan gradient berlebihan.
+- Jangan membuat setiap halaman memiliki warna berbeda.
+- Jangan menggunakan warna random.
+- Semua halaman harus terasa seperti satu aplikasi yang sama.
+- Button harus konsisten.
+- Input harus konsisten.
+- Card harus konsisten.
+- Table harus konsisten.
+- Typography harus konsisten.
+- Border radius harus konsisten.
+- Shadow harus konsisten.
+
+============================================================
+5. LAYOUT UTAMA
+============================================================
+
+Setelah login, gunakan layout:
+
+SIDEBAR KIRI
++
+HEADER
++
+CONTENT AREA
+
+Sidebar harus tetap konsisten di seluruh halaman.
+
+Sidebar:
+
+Logo/icon:
+KoperasiKu
+
+Menu:
+
+Dashboard
+Produk
+Transaksi
+Laporan
+Pengaturan
+
+Bagian bawah:
+
+Logout
+
+Menu yang sedang aktif menggunakan warna Primary Blue #2563EB.
+
+Sidebar menggunakan Dark Navy #0F172A.
+
+============================================================
+6. LOGIN
+============================================================
+
+Buat halaman login seperti referensi.
+
+Layout dua bagian.
+
+Bagian kiri:
+
+Logo/icon KoperasiKu
+
+KoperasiKu
+
+Sistem Kasir & Manajemen Koperasi
+
+Tambahkan ilustrasi sederhana bertema koperasi/toko jika project belum memiliki asset.
+
+Bagian kanan:
+
+Masuk ke Akun Anda
+
+Silakan login untuk melanjutkan
+
+Input:
+Username
+
+Input:
+Password
+
+Button:
+Masuk
+
+Tambahkan:
+- icon username
+- icon password
+- toggle show/hide password
+- validasi input
+- pesan error jika login gagal
+
+Setelah login berhasil:
+→ Dashboard
+
+============================================================
+7. DASHBOARD
+============================================================
+
+Buat Dashboard seperti referensi.
+
+Header:
+
+Dashboard
+
+Di kanan:
+- notification icon
+- avatar
+- nama petugas
+- role
+
+Contoh:
+
+Siti Aisyah
+Petugas
+
+Tampilkan:
+
+Selamat Datang, Siti Aisyah! 👋
+
+Berikut adalah ringkasan informasi koperasi hari ini.
+
+Buat 4 card statistik:
+
+CARD 1:
+Total Produk
+120
+Produk
+
+CARD 2:
+Stok Barang
+350
+Item
+
+CARD 3:
+Transaksi Hari Ini
+45
+Transaksi
+
+CARD 4:
+Pendapatan Hari Ini
+Rp2.450.000
+Total Penjualan
+
+Data harus berasal dari database jika backend sudah tersedia.
+
+Jangan hardcode jika data sebenarnya sudah dapat diambil dari database.
+
+Buat:
+
+Grafik Penjualan
+7 Hari Terakhir
+
+Gunakan line chart.
+
+Buat:
+
+Transaksi Terbaru
+
+Kolom:
+No
+ID Transaksi
+Tanggal
+Total
+Kasir
+
+Tambahkan:
+Lihat Semua
+
+============================================================
+8. PRODUK
+============================================================
+
+Halaman:
+
+Data Produk
+
+Subtitle:
+
+Kelola semua data produk koperasi.
+
+Button:
+
++ Tambah Produk
+
+Search:
+
+Cari nama atau kode produk...
+
+Tabel:
+
+Kode
+Nama Produk
+Harga Jual
+Stok
+Satuan
+Aksi
+
+Contoh data:
+
+P001 | Pulpen Standard | Rp2.000 | 50 | pcs
+P002 | Buku Tulis 38 Lbr | Rp5.000 | 30 | pcs
+P003 | Pensil 2B | Rp2.500 | 25 | pcs
+P004 | Penghapus Joyko | Rp1.500 | 40 | pcs
+P005 | Penggaris 30cm | Rp3.000 | 20 | pcs
+P006 | Spidol Board Marker | Rp6.000 | 15 | pcs
+P007 | Kertas A4 70gr | Rp40.000 | 10 | rim
+P008 | Map Plastik | Rp2.000 | 35 | pcs
+
+Aksi:
+- Edit
+- Hapus
+
+Tambahkan pagination.
+
+Search harus bisa berdasarkan:
+- kode produk
+- nama produk
+
+============================================================
+9. TAMBAH PRODUK
+============================================================
+
+Buat form:
+
+Tambah Produk Baru
+
+Field:
+
+Kode Produk
+Nama Produk
+Harga Beli
+Harga Jual
+Stok
+Satuan
+
+Satuan:
+- pcs
+- box
+- lusin
+- rim
+- botol
+- kg
+
+Button:
+
+Batal
+Simpan Produk
+
+Validasi:
+- kode wajib
+- nama wajib
+- harga wajib angka
+- stok wajib angka
+- kode tidak boleh duplikat
+- harga tidak boleh bernilai tidak valid
+- stok tidak boleh negatif
+
+Setelah berhasil:
+
+Produk berhasil ditambahkan.
+
+============================================================
+10. EDIT PRODUK
+============================================================
+
+Buat form:
+
+Edit Produk
+
+Field:
+- Kode Produk
+- Nama Produk
+- Harga Beli
+- Harga Jual
+- Stok
+- Satuan
+
+Button:
+
+Batal
+Update Produk
+
+Setelah berhasil:
+
+Produk berhasil diperbarui.
+
+============================================================
+11. HAPUS PRODUK
+============================================================
+
+Ketika user menekan Hapus:
+
+Tampilkan confirmation dialog.
+
+Contoh:
+
+Apakah Anda yakin ingin menghapus produk ini?
+
+Button:
+Batal
+Hapus
+
+Jangan langsung menghapus tanpa konfirmasi.
+
+Setelah berhasil:
+
+Produk berhasil dihapus.
+
+============================================================
+12. TRANSAKSI / KASIR
+============================================================
+
+Buat halaman kasir sangat mirip dengan referensi.
+
+Layout utama:
+
+SIDEBAR
++
+AREA KASIR
+
+Area kasir dibagi menjadi:
+
+BAGIAN KIRI:
+Cari / Scan Produk
+
+BAGIAN KANAN:
+Keranjang
+
+============================================================
+
+BAGIAN KIRI:
+
+Judul:
+
+Cari / Scan Produk
+
+Search bar:
+
+Scan barcode atau cari produk...
+
+Tampilkan daftar produk.
+
+Setiap produk memiliki:
+- icon/gambar
+- nama
+- harga
+- tombol +
+
+Contoh:
+
+Pulpen Standard
+Rp2.000
+[ + ]
+
+Buku Tulis 38 Lbr
+Rp5.000
+[ + ]
+
+Pensil 2B
+Rp2.500
+[ + ]
+
+Jika stok 0:
+produk tidak boleh ditambahkan.
+
+============================================================
+
+BAGIAN KANAN:
+
+Keranjang
+
+Kolom:
+
+Produk
+Qty
+Harga
+Subtotal
+Aksi
+
+Qty:
+
+[-] [2] [+]
+
+Setiap item memiliki tombol hapus.
+
+Contoh:
+
+Pulpen Standard
+Qty 2
+Harga Rp2.000
+Subtotal Rp4.000
+
+Buku Tulis 38 Lbr
+Qty 1
+Harga Rp5.000
+Subtotal Rp5.000
+
+============================================================
+13. PEMBAYARAN
+============================================================
+
+Tampilkan:
+
+Total
+Rp9.000
+
+Bayar
+[ Rp10.000 ]
+
+Kembalian
+Rp1.000
+
+Tombol besar:
+
+BAYAR (ENTER)
+
+Fitur:
+
+- total dihitung otomatis
+- subtotal dihitung otomatis
+- pembayaran dihitung otomatis
+- kembalian dihitung otomatis
+- pembayaran tidak boleh kurang dari total
+- bisa menggunakan tombol Enter untuk pembayaran jika memungkinkan
+
+Jika uang kurang:
+
+Jumlah pembayaran tidak mencukupi.
+
+Jika transaksi berhasil:
+
+Transaksi berhasil disimpan.
+
+Kemudian:
+
+1. Simpan transaksi.
+2. Simpan detail transaksi.
+3. Kurangi stok.
+4. Tampilkan struk.
+5. Kosongkan keranjang.
+
+============================================================
+14. STOK
+============================================================
+
+Stok harus benar-benar terhubung dengan transaksi.
+
+Contoh:
+
+Stok awal:
+Pulpen = 50
+
+Pembelian:
+2
+
+Setelah transaksi:
+Pulpen = 48
+
+Status stok:
+
+Stok normal
+Stok rendah
+Stok habis
+
+Aturan:
+
+Jika stok > 10:
+Normal
+
+Jika stok 1-10:
+Rendah
+
+Jika stok 0:
+Habis
+
+Produk dengan stok 0 tidak boleh dibeli.
+
+Jangan hanya mengubah tampilan stok.
+
+Stok harus benar-benar berubah di database.
+
+============================================================
+15. STRUK / NOTA
+============================================================
+
+Buat struk seperti referensi.
+
+Header:
+
+KOPERASIKU
+
+Koperasi Sekolah
+
+--------------------------------
+
+No Transaksi : TRX-0005
+Tanggal      : 02/06/2026 10:15
+Kasir        : Siti Aisyah
+
+--------------------------------
+
+Produk
+Qty
+Harga
+Subtotal
+
+Pulpen Standard
+2
+Rp2.000
+Rp4.000
+
+Buku Tulis 38 Lbr
+1
+Rp5.000
+Rp5.000
+
+--------------------------------
+
+TOTAL       Rp9.000
+BAYAR       Rp10.000
+KEMBALI     Rp1.000
+
+--------------------------------
+
+TERIMA KASIH
+
+Selamat Belanja Kembali 😊
+
+Button:
+
+Cetak Struk
+
+Buat desain struk yang cocok untuk printer thermal 58mm/80mm jika memungkinkan.
+
+============================================================
+16. RIWAYAT TRANSAKSI
+============================================================
+
+Tampilkan daftar transaksi.
+
+Kolom:
+
+No
+ID Transaksi
+Tanggal
+Kasir
+Total
+Aksi
+
+Contoh:
+
+TRX-0005
+02/06/2026 10:15
+Siti Aisyah
+Rp9.000
+
+Aksi:
+
+Detail
+
+============================================================
+17. DETAIL TRANSAKSI
+============================================================
+
+Halaman:
+
+Detail Transaksi
+
+Tampilkan:
+
+No Transaksi
+TRX-0005
+
+Tanggal
+02/06/2026 10:15
+
+Kasir
+Siti Aisyah
+
+Tabel:
+
+Produk
+Qty
+Harga
+Subtotal
+
+Kemudian:
+
+Total
+Bayar
+Kembalian
+
+Button:
+
+Cetak Struk
+
+Kembali
+
+============================================================
+18. LAPORAN PENJUALAN
+============================================================
+
+Halaman:
+
+Laporan Penjualan
+
+Filter:
+
+Tanggal Mulai
+Tanggal Akhir
+
+Button:
+
+Tampilkan
+
+Button:
+
+Cetak Laporan
+
+Summary:
+
+Total Transaksi
+125 Transaksi
+
+Total Pendapatan
+Rp6.250.000
+
+Tabel:
+
+No
+ID Transaksi
+Tanggal
+Kasir
+Total
+Aksi
+
+Aksi:
+Detail
+
+Tambahkan grafik jika sesuai dengan struktur project.
+
+============================================================
+19. PENGATURAN
+============================================================
+
+Buat halaman pengaturan jika struktur project mendukung.
+
+Minimal dapat berisi:
+
+- informasi akun
+- nama petugas
+- username
+- pengaturan aplikasi jika diperlukan
+
+Jangan membuat fitur yang tidak diperlukan hanya untuk memenuhi halaman.
+
+============================================================
+20. DATABASE
+============================================================
+
+Gunakan database yang sudah digunakan project.
+
+Minimal struktur data:
+
+users
+
+- id
+- name
+- username
+- password
+- role
+- created_at
+- updated_at
+
+products
+
+- id
+- code
+- name
+- purchase_price
+- selling_price
+- stock
+- unit
+- created_at
+- updated_at
+
+transactions
+
+- id
+- transaction_code
+- user_id
+- total
+- paid
+- change
+- transaction_date
+- created_at
+- updated_at
+
+transaction_details
+
+- id
+- transaction_id
+- product_id
+- quantity
+- price
+- subtotal
+- created_at
+- updated_at
+
+Relasi:
+
+User
+↓
+Transactions
+↓
+Transaction Details
+↓
+Products
+
+Gunakan relationship Model yang sesuai.
+
+Jangan membuat struktur database baru jika project sudah memiliki struktur yang setara.
+
+Jika perlu perubahan database, buat migration yang benar.
+
+============================================================
+21. ROUTES
+============================================================
+
+Pastikan semua halaman mempunyai route yang jelas.
+
+Minimal:
+
+Login
+Dashboard
+Produk
+Tambah Produk
+Edit Produk
+Hapus Produk
+Transaksi
+Detail Transaksi
+Struk
+Laporan
+Logout
+
+Gunakan route/controller yang sesuai dengan framework project.
+
+Jangan membuat route duplicate.
+
+============================================================
+22. COMPONENT / KODE REUSABLE
+============================================================
+
+Gunakan component reusable jika framework mendukung.
+
+Contoh:
+
+Sidebar
+Header
+StatCard
+ProductTable
+ProductForm
+SearchProduct
+Cart
+CartItem
+PaymentSummary
+Receipt
+TransactionTable
+ReportTable
+Modal
+Toast
+Pagination
+
+Jangan menulis kode yang sama berkali-kali jika bisa dibuat reusable.
+
+============================================================
+23. CSS
+============================================================
+
+Pastikan seluruh aplikasi menggunakan design system yang sama.
+
+Jangan membuat CSS random di setiap halaman.
+
+Jika project menggunakan Tailwind:
+gunakan utility class dan konfigurasi theme yang konsisten.
+
+Jika project menggunakan CSS biasa:
+buat variable warna agar mudah dikelola.
+
+Contoh:
+
+--primary: #2563EB;
+--navy: #0F172A;
+--background: #F8FAFC;
+--white: #FFFFFF;
+--border: #E2E8F0;
+--text: #0F172A;
+--secondary: #64748B;
+--success: #16A34A;
+--danger: #DC2626;
+--warning: #F59E0B;
+
+Gunakan variable tersebut di seluruh aplikasi jika memungkinkan.
+
+============================================================
+24. JAVASCRIPT
+============================================================
+
+Gunakan JavaScript hanya jika diperlukan.
+
+Fungsi yang mungkin diperlukan:
+
+- search produk
+- tambah ke keranjang
+- quantity
+- hapus item
+- subtotal
+- total
+- pembayaran
+- kembalian
+- modal
+- toast
+- chart
+- validasi
+- cetak
+
+Pastikan JavaScript tidak merusak fungsi backend.
+
+============================================================
+25. RESPONSIVE
+============================================================
+
+Desktop/laptop menjadi prioritas karena aplikasi digunakan oleh petugas koperasi.
+
+Tetapi tetap responsive untuk tablet dan layar kecil.
+
+Pada layar kecil:
+
+- sidebar dapat menjadi hamburger menu
+- tabel dapat horizontal scroll
+- card menyesuaikan
+- form menyesuaikan
+- halaman kasir tetap usable
+
+============================================================
+26. UX
+============================================================
+
+Tambahkan:
+
+- loading state
+- empty state
+- confirmation sebelum hapus
+- toast notification
+- validasi form
+- error message
+- success message
+- logout confirmation
+
+Contoh:
+
+Produk berhasil ditambahkan.
+
+Produk berhasil diperbarui.
+
+Produk berhasil dihapus.
+
+Transaksi berhasil disimpan.
+
+Data tidak ditemukan.
+
+Pembayaran tidak mencukupi.
+
+============================================================
+27. DATA CONTOH
+============================================================
+
+Jika database belum memiliki data contoh, gunakan:
+
+P001 | Pulpen Standard | Rp2.000 | 50 | pcs
+P002 | Buku Tulis 38 Lbr | Rp5.000 | 30 | pcs
+P003 | Pensil 2B | Rp2.500 | 25 | pcs
+P004 | Penghapus Joyko | Rp1.500 | 40 | pcs
+P005 | Penggaris 30cm | Rp3.000 | 20 | pcs
+P006 | Spidol Board Marker | Rp6.000 | 15 | pcs
+P007 | Kertas A4 70gr | Rp40.000 | 10 | rim
+P008 | Map Plastik | Rp2.000 | 35 | pcs
+
+Jika project sudah memiliki data, jangan menimpa data existing tanpa alasan.
+
+============================================================
+28. README.md — WAJIB DIBUAT
+============================================================
+
+Buat file:
+
+README.md
+
+README.md HARUS berada langsung di ROOT FOLDER PROJECT.
+
+Contoh:
+
+KoperasiKu/
+├── app/
+├── database/
+├── public/
+├── resources/
+├── routes/
+├── storage/
+├── .env
+├── composer.json
+├── package.json
+└── README.md
+
+JANGAN menaruh README.md di dalam:
+- app/
+- resources/
+- public/
+- database/
+- routes/
+
+README.md harus menjadi dokumentasi utama project.
+
+============================================================
+29. ISI README.md
+============================================================
+
+README.md harus menjelaskan project dengan bahasa yang mudah dipahami oleh siswa/developer pemula.
+
+Minimal berisi:
+
+# KoperasiKu
+
+Sistem Kasir & Manajemen Koperasi
+
+## 1. Tentang Aplikasi
+
+Jelaskan fungsi aplikasi.
+
+## 2. Fitur
+
+Jelaskan seluruh fitur.
+
+## 3. Teknologi
+
+Tuliskan framework, bahasa, database, library, dan teknologi yang BENAR-BENAR digunakan project.
+
+## 4. Struktur Folder
+
+Tampilkan struktur folder project AKTUAL.
+
+Jangan menulis folder yang tidak ada.
+
+## 5. Penjelasan Folder
+
+Jelaskan fungsi:
+
+app
+database
+public
+resources
+routes
+storage
+
+dan folder lain yang benar-benar ada.
+
+## 6. Controller
+
+Jelaskan Controller yang BENAR-BENAR ada.
+
+Contoh:
+
+ProductController
+→ mengatur CRUD produk.
+
+TransactionController
+→ mengatur proses transaksi.
+
+Gunakan nama file aktual project.
+
+## 7. Model
+
+Jelaskan Model yang benar-benar ada.
+
+## 8. Migration
+
+Jelaskan tabel database dan migration yang digunakan.
+
+## 9. Routes
+
+Jelaskan route penting dan halaman yang diakses.
+
+## 10. Views
+
+Jelaskan lokasi setiap halaman.
+
+Contoh jika memang ada:
+
+resources/views/products/
+→ halaman produk.
+
+resources/views/transactions/
+→ halaman transaksi.
+
+## 11. CSS
+
+Jelaskan file CSS yang digunakan dan lokasi styling.
+
+## 12. JavaScript
+
+Jelaskan file JavaScript dan fungsinya.
+
+## 13. Database
+
+Jelaskan tabel dan relationship.
+
+## 14. Alur Login
+
+Jelaskan alur login.
+
+## 15. Alur CRUD Produk
+
+Jelaskan tambah, tampil, edit, hapus.
+
+## 16. Alur Transaksi
+
+Jelaskan:
+
+Produk
+→ Keranjang
+→ Total
+→ Bayar
+→ Kembalian
+→ Simpan transaksi
+→ Kurangi stok
+→ Struk
+
+## 17. Alur Laporan
+
+Jelaskan bagaimana data transaksi digunakan untuk laporan.
+
+## 18. Di Mana Saya Harus Mencari Kode?
+
+Buat tabel:
+
+Yang ingin diubah
+→ lokasi file/folder
+
+Contoh:
+
+Login
+→ lokasi aktual
+
+Dashboard
+→ lokasi aktual
+
+Produk
+→ lokasi aktual
+
+Kasir
+→ lokasi aktual
+
+Struk
+→ lokasi aktual
+
+Laporan
+→ lokasi aktual
+
+Warna
+→ lokasi aktual
+
+Database
+→ lokasi aktual
+
+Route
+→ lokasi aktual
+
+## 19. Cara Menjalankan Project
+
+Tulis langkah yang BENAR-BENAR sesuai dengan framework/project.
+
+## 20. Database Setup
+
+Tulis cara membuat/menghubungkan database.
+
+## 21. Migration
+
+Tulis command yang benar.
+
+## 22. Seeder
+
+Jika ada, jelaskan.
+
+## 23. Troubleshooting
+
+Tambahkan masalah umum dan solusinya jika relevan.
+
+============================================================
+30. README HARUS BERDASARKAN PROJECT AKTUAL
+============================================================
+
+Ini SANGAT PENTING.
+
+Jangan membuat README berdasarkan asumsi.
+
+Sebelum membuat README:
+
+1. Baca struktur folder.
+2. Baca package/config.
+3. Baca routes.
+4. Baca Controller.
+5. Baca Model.
+6. Baca View.
+7. Baca migration.
+8. Baca CSS.
+9. Baca JavaScript.
+
+Setelah itu buat README berdasarkan kode yang benar-benar ada.
+
+Jika file bernama berbeda, gunakan nama file yang sebenarnya.
+
+Jika folder tidak ada, jangan tuliskan folder tersebut.
+
+Jika suatu fitur belum dibuat, jangan mengklaim fitur tersebut sudah tersedia.
+
+============================================================
+31. KUALITAS KODE
+============================================================
+
+Kode harus:
+
+- rapi
+- mudah dibaca
+- terstruktur
+- tidak duplicate
+- menggunakan naming yang jelas
+- menggunakan component reusable
+- memiliki validasi
+- aman dari input yang tidak valid
+- tidak merusak fitur existing
+
+Jangan membuat solusi hacky hanya agar UI terlihat benar.
+
+Pastikan backend dan frontend benar-benar terhubung.
+
+============================================================
+32. TESTING
+============================================================
+
+Setelah perubahan selesai, periksa:
+
+LOGIN
+✓ Login berhasil
+✓ Login gagal menampilkan error
+✓ Logout bekerja
+
+DASHBOARD
+✓ Statistik tampil
+✓ Data sesuai database
+✓ Grafik tampil jika digunakan
+
+PRODUK
+✓ Produk tampil
+✓ Search bekerja
+✓ Tambah bekerja
+✓ Edit bekerja
+✓ Hapus bekerja
+✓ Validasi bekerja
+
+KASIR
+✓ Search produk
+✓ Tambah produk ke keranjang
+✓ Quantity +
+✓ Quantity -
+✓ Hapus item
+✓ Total otomatis
+✓ Bayar
+✓ Kembalian
+✓ Pembayaran kurang ditolak
+
+TRANSAKSI
+✓ Transaksi tersimpan
+✓ Detail tersimpan
+✓ Stok berkurang
+✓ Riwayat muncul
+✓ Detail transaksi muncul
+
+STRUK
+✓ Data benar
+✓ Total benar
+✓ Bayar benar
+✓ Kembalian benar
+✓ Cetak bekerja
+
+LAPORAN
+✓ Filter tanggal
+✓ Data transaksi tampil
+✓ Total sesuai
+
+UI
+✓ Warna konsisten
+✓ Sidebar konsisten
+✓ Button konsisten
+✓ Responsive
+✓ Tidak ada layout rusak
+
+============================================================
+33. PRIORITAS PENGERJAAN
+============================================================
+
+Kerjakan dengan urutan:
+
+1. Pahami project existing.
+2. Rapikan struktur jika diperlukan TANPA merusak fitur.
+3. Terapkan design system KoperasiKu.
+4. Perbaiki layout utama/sidebar/header.
+5. Perbaiki Login.
+6. Perbaiki Dashboard.
+7. Perbaiki Produk.
+8. Perbaiki Tambah/Edit Produk.
+9. Perbaiki Kasir.
+10. Perbaiki Keranjang.
+11. Perbaiki Pembayaran.
+12. Perbaiki Stok.
+13. Perbaiki Struk.
+14. Perbaiki Riwayat Transaksi.
+15. Perbaiki Detail Transaksi.
+16. Perbaiki Laporan.
+17. Perbaiki Responsive.
+18. Buat/update README.md di ROOT project.
+19. Test semua fitur.
+20. Perbaiki error yang ditemukan.
+
+============================================================
+34. HASIL AKHIR YANG SAYA INGINKAN
+============================================================
+
+Saya ingin hasil akhirnya menjadi aplikasi:
+
+KOPERASIKU
+Sistem Kasir & Manajemen Koperasi
+
+dengan tampilan profesional seperti gambar referensi.
+
+Ciri visual:
+
+- sidebar navy
+- primary blue
+- background abu muda
+- card putih
+- tabel bersih
+- button biru
+- icon modern
+- spacing rapi
+- border tipis
+- shadow ringan
+- typography profesional
+- seluruh halaman konsisten
+
+Aplikasi bukan sekadar mockup.
+
+Fitur harus benar-benar terhubung dan berjalan.
+
+Data produk harus terhubung ke database.
+
+Transaksi harus tersimpan.
+
+Detail transaksi harus tersimpan.
+
+Stok harus berkurang setelah transaksi.
+
+Total harus dihitung.
+
+Kembalian harus dihitung.
+
+Struk harus mengambil data transaksi sebenarnya.
+
+Laporan harus mengambil data transaksi sebenarnya.
+
+============================================================
+35. ATURAN TERAKHIR
+============================================================
+
+JANGAN:
+
+- membuat project baru jika project sudah ada
+- mengganti framework tanpa alasan
+- menghapus fitur existing
+- membuat database duplicate
+- membuat route duplicate
+- membuat Controller duplicate
+- membuat View duplicate
+- menggunakan warna random
+- menggunakan warna ungu sebagai warna utama
+- hardcode data jika database sudah tersedia
+- membuat README berdasarkan asumsi
+- menaruh README di folder selain root
+
+WAJIB:
+
+- baca project terlebih dahulu
+- gunakan struktur existing
+- gunakan gambar referensi sebagai acuan desain
+- gunakan branding KoperasiKu
+- gunakan warna yang konsisten
+- gunakan database yang benar
+- gunakan component reusable
+- buat README.md di ROOT PROJECT
+- sesuaikan README dengan struktur kode aktual
+- test fitur setelah perubahan
+
+Jika menemukan masalah atau struktur project yang berbeda dari instruksi ini, jangan langsung mengganti semuanya.
+
+Sesuaikan implementasi dengan project yang sudah ada dan pilih solusi yang paling aman agar fitur existing tetap berjalan.
+
+SETELAH SELESAI:
+
+Berikan ringkasan:
+1. File yang dibuat.
+2. File yang diubah.
+3. Fitur yang berhasil dibuat/diperbaiki.
+4. Database/migration yang berubah.
+5. Cara menjalankan project.
+6. Cara membuka README.md.
+7. Jika masih ada error, jelaskan error tersebut dan file penyebabnya.
+
+============================================================
+SELESAI
+============================================================
