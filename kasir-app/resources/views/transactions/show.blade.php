@@ -1,75 +1,14 @@
-@extends('layouts.custom')
+@extends('layouts.app')
 
 @section('title', 'Detail Transaksi')
 
 @section('content')
-<div class="container bg-white p-4 rounded shadow-sm">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>Detail Transaksi {{ $transaction->invoice_number }}</h2>
-        <div>
-            <a href="{{ route('cashier.receipt', $transaction->id) }}" class="btn btn-success">Cetak Struk</a>
-            <a href="{{ route('transactions.index') }}" class="btn btn-secondary">&larr; Kembali ke Riwayat</a>
-        </div>
-    </div>
-
-    <div class="row mb-4">
-        <div class="col-md-4">
-            <div class="border rounded p-3 h-100">
-                <div class="text-muted small">No. Nota</div>
-                <div class="fw-bold">{{ $transaction->invoice_number }}</div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="border rounded p-3 h-100">
-                <div class="text-muted small">Tanggal</div>
-                <div class="fw-bold">{{ $transaction->created_at->format('d-m-Y H:i') }}</div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="border rounded p-3 h-100">
-                <div class="text-muted small">Jumlah Item</div>
-                <div class="fw-bold">{{ $transaction->details->sum('quantity') }}</div>
-            </div>
-        </div>
-    </div>
-
-    <table class="table table-bordered table-hover">
-        <thead>
-            <tr>
-                <th>Produk</th>
-                <th class="text-end">Harga</th>
-                <th class="text-end">Qty</th>
-                <th class="text-end">Subtotal</th>
-            </tr>
-        </thead>
-        <tbody>
-            @forelse($transaction->details as $detail)
-            <tr>
-                <td>{{ $detail->product->name }}</td>
-                <td class="text-end">Rp {{ number_format($detail->price) }}</td>
-                <td class="text-end">{{ $detail->quantity }}</td>
-                <td class="text-end">Rp {{ number_format($detail->subtotal) }}</td>
-            </tr>
-            @empty
-            <tr>
-                <td colspan="4" class="text-center text-muted">Transaksi ini tidak memiliki detail produk.</td>
-            </tr>
-            @endforelse
-        </tbody>
-        <tfoot>
-            <tr class="fw-bold">
-                <td colspan="3" class="text-end">TOTAL</td>
-                <td class="text-end">Rp {{ number_format($transaction->total_price) }}</td>
-            </tr>
-            <tr>
-                <td colspan="3" class="text-end">Bayar</td>
-                <td class="text-end">Rp {{ number_format($transaction->pay_amount) }}</td>
-            </tr>
-            <tr>
-                <td colspan="3" class="text-end">Kembali</td>
-                <td class="text-end">Rp {{ number_format($transaction->change_amount) }}</td>
-            </tr>
-        </tfoot>
-    </table>
-</div>
+    <div class="mb-6 flex flex-wrap items-end justify-between gap-4"><div><h1 class="page-title">Detail Transaksi</h1><p class="page-subtitle">{{ $transaction->transaction_code }}</p></div><div class="flex gap-2"><a class="btn-secondary" href="{{ route('transactions.index') }}">Kembali</a><a class="btn-primary" href="{{ route('cashier.receipt', $transaction) }}">Cetak Struk</a></div></div>
+    <section class="card">
+        <div class="grid gap-5 border-b border-line p-5 sm:grid-cols-3"><div><p class="text-xs text-muted">No Transaksi</p><p class="mt-1 font-semibold">{{ $transaction->transaction_code }}</p></div><div><p class="text-xs text-muted">Tanggal</p><p class="mt-1 font-medium">{{ $transaction->date?->format('d M Y, H:i') }}</p></div><div><p class="text-xs text-muted">Kasir</p><p class="mt-1 font-medium">{{ $transaction->user?->name ?? 'Petugas' }}</p></div></div>
+        <div class="table-wrap"><table class="table"><thead><tr><th>Produk</th><th class="text-right">Qty</th><th class="text-right">Harga</th><th class="text-right">Subtotal</th></tr></thead><tbody>
+            @foreach ($transaction->details as $detail)<tr><td class="font-medium">{{ $detail->product?->name ?? 'Produk dihapus' }}</td><td class="text-right tabular">{{ $detail->quantity }}</td><td class="text-right tabular">Rp{{ number_format($detail->price, 0, ',', '.') }}</td><td class="text-right font-semibold tabular">Rp{{ number_format($detail->subtotal, 0, ',', '.') }}</td></tr>@endforeach
+        </tbody></table></div>
+        <div class="ml-auto max-w-sm space-y-3 border-t border-line p-5"><div class="flex justify-between text-sm"><span class="text-muted">Total</span><span class="font-bold tabular">Rp{{ number_format($transaction->total, 0, ',', '.') }}</span></div><div class="flex justify-between text-sm"><span class="text-muted">Bayar</span><span class="tabular">Rp{{ number_format($transaction->paid, 0, ',', '.') }}</span></div><div class="flex justify-between text-sm"><span class="text-muted">Kembalian</span><span class="font-semibold text-success tabular">Rp{{ number_format($transaction->change, 0, ',', '.') }}</span></div></div>
+    </section>
 @endsection

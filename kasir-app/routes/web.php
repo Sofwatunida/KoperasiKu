@@ -1,62 +1,59 @@
 <?php
 
+use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CartController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProductController;
-use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ReportController;
+use App\Http\Controllers\SettingController;
 use App\Http\Controllers\TransactionController;
-use App\Models\Product;
-use App\Models\Transaction;
 use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
-| Halaman Utama
+| Halaman Tamu
 |--------------------------------------------------------------------------
-| Sebelumnya, "/" langsung mengarah ke halaman Kasir.
+| Belum login: hanya halaman login yang bisa diakses.
 */
-Route::get('/', fn () => redirect()->route('cashier.index'));
+Route::middleware('guest')->group(function () {
+    Route::get('login', [AuthController::class, 'create'])->name('login');
+    Route::post('login', [AuthController::class, 'store']);
+    Route::get('register', [AuthController::class, 'registration'])->name('register');
+    Route::post('register', [AuthController::class, 'storeRegistration'])->name('register.store');
+});
 
 /*
 |--------------------------------------------------------------------------
-| Dashboard
+| Halaman Applications
 |--------------------------------------------------------------------------
+| Setelah login berhasil semua halaman aplikasi dapat diakses.
 */
-Route::get('/dashboard', function () {
-    return view('dashboard', [
-        'totalProducts' => Product::count(),
-        'totalTransactions' => Transaction::count(),
-        'totalOmzet' => (int) Transaction::sum('total_price'),
-    ]);
-})->middleware(['auth', 'verified'])->name('dashboard');
+Route::middleware('auth')->group(function () {
+    Route::post('logout', [AuthController::class, 'destroy'])->name('logout');
 
-/*
-|--------------------------------------------------------------------------
-| Authentication (Laravel Breeze)
-|--------------------------------------------------------------------------
-*/
-require __DIR__.'/auth.php';
-
-/*
-|--------------------------------------------------------------------------
-| Aplikasi (butuh login)
-|--------------------------------------------------------------------------
-*/
-Route::middleware(['auth'])->group(function () {
-
-    // Profil User (Laravel Breeze)
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::get('/', fn () => redirect()->route('dashboard'));
+    Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // Manajemen Produk (CRUD)
-    Route::resource('products', ProductController::class)->except(['show']);
+    Route::resource('produk', ProductController::class)
+        ->parameters(['produk' => 'product'])
+        ->except(['show'])
+        ->names('products');
 
-    // Kasir & Struk
-    Route::get('cashier', [CartController::class, 'index'])->name('cashier.index');
-    Route::post('cashier/checkout', [CartController::class, 'checkout'])->name('cashier.checkout');
-    Route::get('cashier/receipt/{transaction}', [CartController::class, 'receipt'])->name('cashier.receipt');
+    // Kasir, Checkout & Struk
+    Route::get('kasir', [CartController::class, 'index'])->name('cashier.index');
+    Route::post('kasir/checkout', [CartController::class, 'checkout'])->name('cashier.checkout');
+    Route::get('kasir/struk/{transaction}', [CartController::class, 'receipt'])->name('cashier.receipt');
 
-    // Riwayat Transaksi & Detail Transaksi
-    Route::get('transactions', [TransactionController::class, 'index'])->name('transactions.index');
-    Route::get('transactions/{transaction}', [TransactionController::class, 'show'])->name('transactions.show');
+    // Riwayat & Detail Transaksi
+    Route::get('riwayat', [TransactionController::class, 'index'])->name('transactions.index');
+    Route::get('riwayat/{transaction}', [TransactionController::class, 'show'])->name('transactions.show');
+
+    // Laporan Penjualan
+    Route::get('laporan', [ReportController::class, 'index'])->name('reports.index');
+    Route::get('laporan/cetak', [ReportController::class, 'print'])->name('reports.print');
+
+    // Pengaturan Akun
+    Route::get('pengaturan', [SettingController::class, 'index'])->name('settings.index');
+    Route::put('pengaturan', [SettingController::class, 'update'])->name('settings.update');
 });

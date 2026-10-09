@@ -2,176 +2,37 @@
 
 @section('title', 'Kasir Digital')
 
+@section('title', 'Transaksi Kasir')
+
 @section('content')
-<div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center mb-4 bg-white p-3 rounded shadow-sm">
-        <h2>Kasir Digital</h2>
-        <a href="{{ route('products.index') }}" class="btn btn-secondary">&larr; Manajemen Produk</a>
-    </div>
-
-    <div class="row">
-        <!-- Daftar Produk -->
-        <div class="col-md-6">
-            <div class="bg-white p-4 rounded shadow-sm">
-                <h4>Pilih Produk</h4>
-                <table class="table table-hover mt-3">
-                    <thead>
-                        <tr>
-                            <th>Nama</th>
-                            <th>Harga</th>
-                            <th>Stok</th>
-                            <th>Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($products as $product)
-                        <tr>
-                            <td>{{ $product->name }}</td>
-                            <td>Rp {{ number_format($product->price) }}</td>
-                            <td>{{ $product->stock }}</td>
-                            <td>
-                                <button class="btn btn-primary btn-sm" data-id="{{ $product->id }}" data-name="{{ $product->name }}" data-price="{{ $product->price }}" data-stock="{{ $product->stock }}" onclick="addToCart(this)">
-                                    + Tambah
-                                </button>
-                            </td>
-                        </tr>
-                        @empty
-                        <tr>
-                            <td colspan="4" class="text-center text-muted">Tidak ada produk dengan stok tersedia.</td>
-                        </tr>
-                        @endforelse
-                    </tbody>
-                </table>
+    <div class="mb-6"><h1 class="page-title">Kasir</h1><p class="page-subtitle">Pilih produk, periksa keranjang, lalu selesaikan pembayaran.</p></div>
+    <div class="grid items-start gap-6 xl:grid-cols-[1.1fr_0.9fr]" data-cashier>
+        <section class="card min-w-0">
+            <div class="card-header"><div><h2 class="card-title">Cari / Scan Produk</h2><p class="mt-1 text-xs text-muted">Pilih produk yang akan dibeli.</p></div><a class="text-sm font-semibold text-primary hover:underline" href="{{ route('products.index') }}">Kelola produk</a></div>
+            <div class="p-5">
+                <form action="{{ route('cashier.index') }}" method="get" class="mb-4 flex gap-2"><label class="sr-only" for="cashier-search">Cari produk</label><input class="input" id="cashier-search" name="search" value="{{ $search }}" placeholder="Scan barcode atau cari produk..."><button class="btn-secondary" type="submit">Cari</button></form>
+                <div class="grid gap-3 sm:grid-cols-2">
+                    @forelse ($products as $product)
+                        <article class="flex min-w-0 items-center justify-between gap-3 rounded-field border border-line p-4"><div class="min-w-0"><p class="truncate text-sm font-semibold">{{ $product->name }}</p><p class="mt-1 text-xs text-muted">{{ $product->code }} <span aria-hidden="true">&middot;</span> {{ $product->stock }} {{ $product->unit }}</p><p class="mt-2 text-sm font-semibold text-primary">Rp{{ number_format($product->selling_price, 0, ',', '.') }}</p></div><button class="grid size-9 shrink-0 place-items-center rounded-field bg-primary text-lg font-semibold text-white hover:bg-primary-dark disabled:cursor-not-allowed disabled:bg-slate-300" type="button" data-add-product data-id="{{ $product->id }}" data-name="{{ $product->name }}" data-price="{{ $product->selling_price }}" data-stock="{{ $product->stock }}" aria-label="Tambahkan {{ $product->name }}" @disabled($product->stock <= 0)>+</button></article>
+                    @empty
+                        <p class="col-span-full py-10 text-center text-sm text-muted">Tidak ada produk yang cocok.</p>
+                    @endforelse
+                </div>
             </div>
-        </div>
-
-        <!-- Keranjang Belanja & Pembayaran -->
-        <div class="col-md-6">
-            <div class="bg-white p-4 rounded shadow-sm">
-                <h4>Keranjang Belanja</h4>
-                <table class="table mt-3">
-                    <thead>
-                        <tr>
-                            <th>Nama</th>
-                            <th>Harga</th>
-                            <th style="width: 100px;">Qty</th>
-                            <th>Subtotal</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody id="cart-table">
-                        <!-- Diisi via JS -->
-                    </tbody>
-                </table>
-
-                <form action="{{ route('cashier.checkout') }}" method="POST" id="checkout-form" class="mt-4 border-top pt-3">
-                    @csrf
-                    <input type="hidden" name="cart" id="cart-input">
-                    <input type="hidden" name="total_price" id="total-price-input">
-
-                    <div class="d-flex justify-content-between mb-2">
-                        <h5>Total Belanja:</h5>
-                        <h5 id="total-text">Rp 0</h5>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Uang Bayar</label>
-                        <input type="number" name="pay_amount" id="pay-input" class="form-control form-control-lg" placeholder="0" required oninput="calculateChange()">
-                    </div>
-
-                    <div class="d-flex justify-content-between mb-4">
-                        <h5>Kembalian:</h5>
-                        <h5 id="change-text" class="text-success">Rp 0</h5>
-                    </div>
-
-                    <button type="submit" class="btn btn-success btn-lg w-100" id="btn-submit" disabled>Proses Transaksi & Cetak Struk</button>
-                </form>
-            </div>
-        </div>
+        </section>
+        <section class="card min-w-0">
+            <div class="card-header"><div><h2 class="card-title">Keranjang</h2><p class="mt-1 text-xs text-muted">Jumlah dan subtotal diperbarui otomatis.</p></div><a class="text-sm font-semibold text-primary hover:underline" href="{{ route('transactions.index') }}">Riwayat</a></div>
+            <div class="table-wrap"><table class="table min-w-[560px]"><thead><tr><th>Produk</th><th>Qty</th><th>Harga</th><th>Subtotal</th><th></th></tr></thead><tbody data-cart-rows></tbody></table></div>
+            <div data-cart-empty class="px-5 py-8 text-center text-sm text-muted">Keranjang masih kosong.</div>
+            <form action="{{ route('cashier.checkout') }}" method="post" data-checkout-form class="border-t border-line p-5">
+                @csrf
+                <div data-cart-inputs></div>
+                <div class="flex items-center justify-between"><span class="text-sm font-medium text-muted">Total</span><span class="text-xl font-bold tabular" data-cart-total>Rp0</span></div>
+                <div class="mt-5"><label class="label" for="paid">Uang pembayaran</label><input class="input @error('paid') input-error @enderror" id="paid" name="paid" type="number" min="0" step="1" value="{{ old('paid') }}" data-payment required placeholder="Masukkan jumlah pembayaran"></div>
+                <div class="mt-4 flex items-center justify-between"><span class="text-sm font-medium text-muted">Kembalian</span><span class="font-semibold text-success tabular" data-cart-change>Rp0</span></div>
+                @error('paid') <p class="field-error">{{ $message }}</p> @enderror
+                <button class="btn-primary btn-lg mt-5" type="submit" data-checkout-submit disabled>Bayar &amp; Simpan Transaksi</button>
+            </form>
+        </section>
     </div>
-</div>
 @endsection
-
-@push('scripts')
-<script>
-    let cart = [];
-
-    function addToCart(btn) {
-        let id = parseInt(btn.dataset.id);
-        let name = btn.dataset.name;
-        let price = parseInt(btn.dataset.price);
-        let maxStock = parseInt(btn.dataset.stock);
-
-        let item = cart.find(p => p.id === id);
-        if (item) {
-            if (item.qty < maxStock) item.qty++;
-            else alert('Stok tidak mencukupi!');
-        } else {
-            cart.push({ id, name, price, qty: 1, maxStock });
-        }
-        renderCart();
-    }
-
-    function updateQty(id, qty) {
-        let item = cart.find(p => p.id === id);
-        if (item) {
-            item.qty = parseInt(qty);
-            if (item.qty > item.maxStock) {
-                alert('Stok tidak mencukupi!');
-                item.qty = item.maxStock;
-            }
-            if (item.qty <= 0 || isNaN(item.qty)) {
-                cart = cart.filter(p => p.id !== id);
-            }
-        }
-        renderCart();
-    }
-
-    function removeFromCart(id) {
-        cart = cart.filter(p => p.id !== id);
-        renderCart();
-    }
-
-    function renderCart() {
-        let html = '';
-        let total = 0;
-
-        cart.forEach(item => {
-            let subtotal = item.price * item.qty;
-            total += subtotal;
-            html += `
-                <tr>
-                    <td>${item.name}</td>
-                    <td>Rp ${item.price.toLocaleString()}</td>
-                    <td>
-                        <input type="number" class="form-control form-control-sm" value="${item.qty}" min="1" max="${item.maxStock}" onchange="updateQty(${item.id}, this.value)">
-                    </td>
-                    <td>Rp ${subtotal.toLocaleString()}</td>
-                    <td><button class="btn btn-danger btn-sm" onclick="removeFromCart(${item.id})">X</button></td>
-                </tr>
-            `;
-        });
-
-        document.getElementById('cart-table').innerHTML = html;
-        document.getElementById('total-text').innerText = 'Rp ' + total.toLocaleString();
-        document.getElementById('total-price-input').value = total;
-        document.getElementById('cart-input').value = JSON.stringify(cart);
-
-        calculateChange();
-    }
-
-    function calculateChange() {
-        let total = parseInt(document.getElementById('total-price-input').value) || 0;
-        let pay = parseInt(document.getElementById('pay-input').value) || 0;
-        let change = pay - total;
-
-        if (change >= 0 && total > 0) {
-            document.getElementById('change-text').innerText = 'Rp ' + change.toLocaleString();
-            document.getElementById('btn-submit').disabled = false;
-        } else {
-            document.getElementById('change-text').innerText = 'Rp 0';
-            document.getElementById('btn-submit').disabled = true;
-        }
-    }
-</script>
-@endpush

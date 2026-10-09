@@ -1,0 +1,16 @@
+@extends('layouts.app')
+
+@section('title', 'Laporan Penjualan')
+
+@section('content')
+    <div class="mb-6"><h1 class="page-title">Laporan Penjualan</h1><p class="page-subtitle">Ringkasan transaksi berdasarkan periode.</p></div>
+    <section class="card mb-6"><form action="{{ route('reports.index') }}" method="get" class="grid gap-4 p-5 sm:grid-cols-[1fr_1fr_auto_auto] sm:items-end"><div><label class="label" for="dari">Tanggal Mulai</label><input class="input" id="dari" name="dari" type="date" value="{{ $dari }}" required></div><div><label class="label" for="sampai">Tanggal Akhir</label><input class="input" id="sampai" name="sampai" type="date" value="{{ $sampai }}" required></div><button class="btn-primary" type="submit">Tampilkan</button><a class="btn-secondary" href="{{ route('reports.print', ['dari' => $dari, 'sampai' => $sampai]) }}" target="_blank" rel="noopener">Cetak Laporan</a></form></section>
+    <section class="mb-6 grid gap-4 sm:grid-cols-2"><article class="card p-5"><p class="text-sm font-medium text-muted">Total Transaksi</p><p class="mt-2 text-2xl font-semibold tabular">{{ number_format($totalTransaksi, 0, ',', '.') }}</p><p class="mt-1 text-xs text-muted">Transaksi pada periode ini</p></article><article class="card p-5"><p class="text-sm font-medium text-muted">Total Pendapatan</p><p class="mt-2 text-2xl font-semibold tabular">Rp{{ number_format($totalPendapatan, 0, ',', '.') }}</p><p class="mt-1 text-xs text-muted">Dari transaksi tersimpan</p></article></section>
+    <section class="card mb-6"><div class="card-header"><div><h2 class="card-title">Penjualan per Hari</h2><p class="mt-1 text-xs text-muted">Periode terpilih</p></div></div><div class="card-body"><div class="flex min-h-40 items-end gap-2 overflow-x-auto border-b border-line pb-2">
+        @php $grafikMax = max(1, (int) $grafik->max('value')); @endphp
+        @foreach ($grafik as $point)<div class="flex min-w-8 flex-1 flex-col items-center justify-end gap-2" title="{{ $point['label'] }}: Rp{{ number_format($point['value'], 0, ',', '.') }}"><div class="w-full max-w-10 rounded-t-sm bg-primary" style="height: {{ max(4, (int) round($point['value'] / $grafikMax * 112)) }}px"></div><span class="whitespace-nowrap text-[10px] text-muted">{{ $point['label'] }}</span></div>@endforeach
+    </div></div></section>
+    <section class="card"><div class="card-header"><h2 class="card-title">Transaksi pada Periode Ini</h2></div><div class="table-wrap"><table class="table"><thead><tr><th>No</th><th>ID Transaksi</th><th>Tanggal</th><th>Kasir</th><th class="text-right">Total</th><th>Aksi</th></tr></thead><tbody>
+        @forelse ($transaksi as $index => $transaction)<tr><td class="text-muted">{{ $index + 1 }}</td><td class="font-semibold">{{ $transaction->transaction_code }}</td><td>{{ $transaction->date?->format('d M Y, H:i') }}</td><td>{{ $transaction->user?->name ?? 'Petugas' }}</td><td class="text-right font-semibold tabular">Rp{{ number_format($transaction->total, 0, ',', '.') }}</td><td><a class="btn-secondary btn-sm" href="{{ route('transactions.show', $transaction) }}">Detail</a></td></tr>@empty<tr><td colspan="6" class="py-10 text-center text-sm text-muted">Tidak ada transaksi pada periode ini.</td></tr>@endforelse
+    </tbody></table></div></section>
+@endsection

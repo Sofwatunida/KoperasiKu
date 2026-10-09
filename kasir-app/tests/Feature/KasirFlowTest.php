@@ -1,147 +1,218 @@
 <?php
 
+namespace Tests\Feature;
+
 use App\Models\Product;
 use App\Models\Transaction;
 use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
+use Tests\TestCase;
 
-beforeEach(function () {
-    // Semua route aplikasi memakai middleware 'auth'.
-    $this->actingAs(User::factory()->create());
-});
+class KasirFlowTest extends TestCase
+{
+    use RefreshDatabase;
 
-it('loads the products page', function () {
-    $this->get(route('products.index'))->assertStatus(200)->assertSee('Manajemen');
-});
+    public function test_guest_can_open_login_and_is_redirected_from_application_pages(): void
+    {
+        $this->get(route('login'))->assertOk()->assertSee('KoperasiKu');
+        $this->get(route('dashboard'))->assertRedirect(route('login'));
+    }
 
-it('loads the create product page', function () {
-    $this->get(route('products.create'))->assertStatus(200)->assertSee('Tambah Produk');
-});
+    public function test_authenticated_pages_load(): void
+    {
+        $this->actingAs($this->createCashier());
 
-it('loads the edit product page', function () {
-    $product = Product::create(['name' => 'Kopi', 'price' => 15000, 'stock' => 10]);
+        $this->get(route('dashboard'))->assertOk()->assertSee('Grafik Penjualan');
+        $this->get(route('products.index'))->assertOk()->assertSee('Data Produk');
+        $this->get(route('products.create'))->assertOk()->assertSee('Tambah Produk Baru');
+        $this->get(route('cashier.index'))->assertOk()->assertSee('Keranjang');
+        $this->get(route('transactions.index'))->assertOk()->assertSee('Riwayat Transaksi');
+        $this->get(route('reports.index'))->assertOk()->assertSee('Laporan Penjualan');
+        $this->get(route('reports.print'))->assertOk()->assertSee('KOPERASIKU');
+        $this->get(route('settings.index'))->assertOk()->assertSee('Pengaturan Akun');
+    }
 
-    $this->get(route('products.edit', $product->id))->assertStatus(200)->assertSee('Kopi');
-});
+    public function test_low_stock_filter_only_lists_products_at_or_below_the_threshold(): void
+    {
+        $this->actingAs($this->createCashier());
+        Product::create($this->productData(['code' => 'P001', 'name' => 'Stok rendah', 'stock' => 5]));
+        Product::create($this->productData(['code' => 'P002', 'name' => 'Stok cukup', 'stock' => 20]));
 
-it('loads the cashier page', function () {
-    Product::create(['name' => 'Kopi', 'price' => 15000, 'stock' => 10]);
-    $this->get(route('cashier.index'))->assertStatus(200)->assertSee('Kopi');
-});
+        $this->get(route('products.index', ['stok_rendah' => 1]))
+            ->assertOk()
+            ->assertSee('Stok rendah')
+            ->assertDontSee('Stok cukup');
+    }
 
-it('loads the dashboard with real product and transaction counts', function () {
-    Product::create(['name' => 'Kopi', 'price' => 15000, 'stock' => 10]);
+    public function test_user_can_sign_in_and_sign_out(): void
+    {
+        $user = $this->createCashier();
 
-    $this->get(route('dashboard'))
-        ->assertStatus(200)
-        ->assertSee('KoperasiKu')
-        ->assertSee('Total Produk');
-});
+        $this->post(route('login'), ['username' => $user->username, 'password' => 'password'])
+            ->assertRedirect(route('dashboard'));
 
-it('stores a product', function () {
-    $this->post(route('products.store'), ['name' => 'Teh', 'price' => 5000, 'stock' => 3])
-        ->assertRedirect();
+        $this->assertAuthenticatedAs($user);
+        $this->post(route('logout'))->assertRedirect(route('login'));
+        $this->assertGuest();
+    }
 
-    $this->assertDatabaseHas('products', ['name' => 'Teh', 'stock' => 3]);
-});
+    public function test_guest_can_register_a_petugas_account(): void
+    {
+        $this->get(route('register'))->assertOk()->assertSee('Buat akun baru');
 
-it('runs the full cashier flow', function () {
-    $product = Product::create(['name' => 'Kopi', 'price' => 15000, 'stock' => 10]);
+        $this->post(route('register.store'), [
+            'name' => 'Dewi Lestari',
+            'username' => 'dewi_lestari',
+            'email' => 'dewi@example.test',
+            'password' => 'password123',
+            'password_confirmation' => 'password123',
+        ])->assertRedirect(route('dashboard'));
 
-    $cart = json_encode([
-        ['id' => $product->id, 'name' => 'Kopi', 'price' => 15000, 'qty' => 1],
-    ]);
+        $user = User::query()->where('username', 'dewi_lestari')->firstOrFail();
+        $this->assertAuthenticatedAs($user);
+        $this->assertSame('petugas', $user->role);
+        $this->assertTrue(Hash::check('password123', $user->password));
+    }
 
-    $this->post(route('cashier.checkout'), [
-        'cart' => $cart,
-        'total_price' => 15000,
-        'pay_amount' => 20000,
-    ])->assertRedirect();
+    public function test_registration_rejects_duplicate_usernames(): void
+    {
+        $this->createCashier();
 
-    $transaction = Transaction::first();
-    $this->assertNotNull($transaction);
-    $this->assertEquals(15000, $transaction->total_price);
-    $this->assertEquals(5000, $transaction->change_amount);
+        $this->post(route('register.store'), [
+            'name' => 'Dewi Lestari',
+            'username' => 'siti',
+            'email' => 'dewi@example.test',
+            'password' => 'password123',
+            'password_confirmation' => 'password123',
+        ])->assertSessionHasErrors('username');
 
-    $this->assertDatabaseHas('transaction_details', [
-        'transaction_id' => $transaction->id,
-        'product_id' => $product->id,
-        'quantity' => 1,
-        'price' => 15000,
-        'subtotal' => 15000,
-    ]);
+        $this->assertDatabaseCount('users', 1);
+    }
 
-    $this->get(route('cashier.receipt', $transaction->id))
-        ->assertStatus(200)
-        ->assertSee('Kopi');
+    public function test_report_rejects_a_date_range_that_ends_before_it_starts(): void
+    {
+        $this->actingAs($this->createCashier());
 
-    $this->assertDatabaseHas('products', ['id' => $product->id, 'stock' => 9]);
-});
+        $this->get(route('reports.index', ['dari' => '2026-10-10', 'sampai' => '2026-10-09']))
+            ->assertSessionHasErrors('sampai');
+    }
 
-it('rejects checkout when payment is insufficient', function () {
-    $product = Product::create(['name' => 'Kopi', 'price' => 15000, 'stock' => 10]);
+    public function test_user_can_create_and_update_a_product(): void
+    {
+        $this->actingAs($this->createCashier());
 
-    $cart = json_encode([['id' => $product->id, 'qty' => 1]]);
+        $this->post(route('products.store'), $this->productData())
+            ->assertRedirect(route('products.index'))
+            ->assertSessionHas('success');
 
-    $this->post(route('cashier.checkout'), [
-        'cart' => $cart,
-        'total_price' => 15000,
-        'pay_amount' => 10000,
-    ])->assertSessionHas('error');
+        $product = Product::query()->firstOrFail();
+        $this->assertDatabaseHas('products', ['code' => 'P001', 'name' => 'Kopi', 'selling_price' => 15000, 'stock' => 10]);
 
-    $this->assertDatabaseCount('transactions', 0);
-    $this->assertDatabaseHas('products', ['id' => $product->id, 'stock' => 10]);
-});
+        $this->put(route('products.update', $product), $this->productData(['code' => 'P002', 'name' => 'Kopi Susu']))
+            ->assertRedirect(route('products.index'))
+            ->assertSessionHasNoErrors();
 
-it('lists transactions on the transactions page', function () {
-    $product = Product::create(['name' => 'Kopi', 'price' => 15000, 'stock' => 10]);
+        $this->assertDatabaseHas('products', ['id' => $product->id, 'name' => 'Kopi Susu']);
+    }
 
-    $cart = json_encode([['id' => $product->id, 'qty' => 1]]);
+    public function test_checkout_saves_transaction_details_and_reduces_stock(): void
+    {
+        $this->actingAs($this->createCashier());
+        $product = Product::create($this->productData());
 
-    $this->post(route('cashier.checkout'), [
-        'cart' => $cart,
-        'total_price' => 15000,
-        'pay_amount' => 20000,
-    ])->assertRedirect();
+        $this->post(route('cashier.checkout'), [
+            'cart' => [['id' => $product->id, 'quantity' => 2]],
+            'paid' => 35000,
+        ])->assertRedirect();
 
-    $this->get(route('transactions.index'))
-        ->assertStatus(200)
-        ->assertSee('Kopi');
+        $transaction = Transaction::first();
+        $this->assertNotNull($transaction);
+        $this->assertEquals(30000, $transaction->total);
+        $this->assertEquals(5000, $transaction->change);
 
-    $transaction = Transaction::first();
+        $this->assertDatabaseHas('transaction_details', [
+            'transaction_id' => $transaction->id,
+            'product_id' => $product->id,
+            'quantity' => 2,
+            'price' => 15000,
+            'subtotal' => 30000,
+        ]);
 
-    $this->get(route('transactions.show', $transaction->id))
-        ->assertStatus(200)
-        ->assertSee('Kopi');
-});
+        $this->get(route('cashier.receipt', $transaction->id))
+            ->assertOk()
+            ->assertSee('KOPERASIKU')
+            ->assertSee('Kopi');
 
-it('cannot delete a product that has transaction history', function () {
-    $product = Product::create(['name' => 'Kopi', 'price' => 15000, 'stock' => 10]);
+        $this->assertDatabaseHas('products', ['id' => $product->id, 'stock' => 8]);
+    }
 
-    $cart = json_encode([['id' => $product->id, 'qty' => 1]]);
+    public function test_checkout_rejected_when_payment_insufficient(): void
+    {
+        $this->actingAs($this->createCashier());
+        $product = Product::create($this->productData());
 
-    $this->post(route('cashier.checkout'), [
-        'cart' => $cart,
-        'total_price' => 15000,
-        'pay_amount' => 20000,
-    ])->assertRedirect();
+        $this->post(route('cashier.checkout'), [
+            'cart' => [['id' => $product->id, 'quantity' => 1]],
+            'paid' => 10000,
+        ])->assertSessionHas('error');
 
-    $this->delete(route('products.destroy', $product->id))
-        ->assertSessionHas('error');
+        $this->assertDatabaseCount('transactions', 0);
+        $this->assertDatabaseHas('products', ['id' => $product->id, 'stock' => 10]);
+    }
 
-    $this->assertDatabaseHas('products', ['id' => $product->id]);
-});
+    public function test_checkout_rejected_when_quantity_exceeds_stock(): void
+    {
+        $this->actingAs($this->createCashier());
+        $product = Product::create($this->productData(['stock' => 1]));
 
-it('can delete a product without transaction history', function () {
-    $product = Product::create(['name' => 'Teh', 'price' => 5000, 'stock' => 3]);
+        $this->post(route('cashier.checkout'), [
+            'cart' => [['id' => $product->id, 'quantity' => 2]],
+            'paid' => 50000,
+        ])->assertSessionHas('error');
 
-    $this->delete(route('products.destroy', $product->id))
-        ->assertSessionHas('success');
+        $this->assertDatabaseCount('transactions', 0);
+        $this->assertDatabaseHas('products', ['id' => $product->id, 'stock' => 1]);
+    }
 
-    $this->assertDatabaseMissing('products', ['id' => $product->id]);
-});
+    public function test_checkout_combines_duplicate_product_rows_before_checking_stock(): void
+    {
+        $this->actingAs($this->createCashier());
+        $product = Product::create($this->productData(['stock' => 1]));
 
-it('requires login for the cashier page', function () {
-    auth()->logout();
+        $this->post(route('cashier.checkout'), [
+            'cart' => [
+                ['id' => $product->id, 'quantity' => 1],
+                ['id' => $product->id, 'quantity' => 1],
+            ],
+            'paid' => 50000,
+        ])->assertSessionHas('error', 'Stok Kopi tidak mencukupi.');
 
-    $this->get(route('cashier.index'))->assertRedirect(route('login'));
-});
+        $this->assertDatabaseCount('transactions', 0);
+        $this->assertDatabaseHas('products', ['id' => $product->id, 'stock' => 1]);
+    }
+
+    private function createCashier(): User
+    {
+        return User::create([
+            'name' => 'Siti Aisyah',
+            'username' => 'siti',
+            'email' => 'siti@example.test',
+            'password' => 'password',
+            'role' => 'petugas',
+        ]);
+    }
+
+    private function productData(array $overrides = []): array
+    {
+        return array_merge([
+            'code' => 'P001',
+            'name' => 'Kopi',
+            'purchase_price' => 10000,
+            'selling_price' => 15000,
+            'stock' => 10,
+            'unit' => 'pcs',
+        ], $overrides);
+    }
+
+}
