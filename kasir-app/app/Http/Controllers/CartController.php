@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use App\Models\Transaction;
 use App\Models\TransactionDetail;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -28,6 +29,47 @@ class CartController extends Controller
         return view('cashier.index', [
             'products' => $products,
             'search' => $keyword,
+        ]);
+    }
+
+    /**
+     * Endpoint barcode scanner: cari produk dari database lalu tentukan
+     * jumlah berikutnya pada keranjang, lengkap dengan validasi stok server-side.
+     */
+    public function scan(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'code' => ['required', 'string', 'max:100'],
+            'quantity' => ['nullable', 'integer', 'min:0'],
+        ], [
+            'code.required' => 'Barcode wajib diisi.',
+        ]);
+
+        $code = trim($validated['code']);
+        $quantity = (int) ($validated['quantity'] ?? 0);
+
+        $product = Product::query()
+            ->whereRaw('UPPER(code) = ?', [mb_strtoupper($code)])
+            ->first();
+
+        if (! $product) {
+            return response()->json([
+                'message' => 'Produk dengan barcode tersebut tidak ditemukan.',
+            ], 404);
+        }
+
+        if ($quantity >= $product->stock) {
+            return response()->json([
+                'message' => 'Jumlah produk sudah mencapai stok maksimum.',
+                'product' => $this->productPayload($product),
+                'quantity' => $quantity,
+            ], 422);
+        }
+
+        return response()->json([
+            'message' => "{$product->name} ditambahkan ke keranjang.",
+            'product' => $this->productPayload($product),
+            'quantity' => $quantity + 1,
         ]);
     }
 
@@ -142,5 +184,22 @@ class CartController extends Controller
         $nextId = (int) Transaction::max('id') + 1;
 
         return 'TRX-'.Str::padLeft((string) $nextId, 4, '0');
+    }
+
+    /**
+     * Data produk yang dikirim ke frontend saat barcode terbaca.
+     *
+     * @return array<string, int|string>
+     */
+    private function productPayload(Product $product): array
+    {
+        return [
+            'id' => $product->id,
+            'code' => $product->code,
+            'name' => $product->name,
+            'price' => $product->selling_price,
+            'stock' => $product->stock,
+            'unit' => $product->unit,
+        ];
     }
 }

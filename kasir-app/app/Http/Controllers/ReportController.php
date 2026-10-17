@@ -3,8 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Transaction;
+use App\Services\ReportExporter;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\View\View;
 
 class ReportController extends Controller
@@ -45,7 +49,109 @@ class ReportController extends Controller
         ]);
     }
 
-    private function query(string $dari, string $sampai): \Illuminate\Database\Eloquent\Builder
+    /**
+     * Unduh laporan sebagai berkas PDF.
+     */
+    public function exportPdf(Request $request, ReportExporter $exporter): Response
+    {
+        return $this->download($exporter->pdf($this->exportData($request)), 'pdf');
+    }
+
+    /**
+     * Unduh laporan sebagai berkas Excel (.xlsx).
+     */
+    public function exportExcel(Request $request, ReportExporter $exporter): Response
+    {
+        return $this->download($exporter->xlsx($this->exportData($request)), 'xlsx');
+    }
+
+    /**
+     * Unduh laporan sebagai berkas Word (.docx).
+     */
+    public function exportWord(Request $request, ReportExporter $exporter): Response
+    {
+        return $this->download($exporter->docx($this->exportData($request)), 'docx');
+    }
+
+    /**
+     * Data mentah laporan (transaksi, produk, quantity, harga, subtotal) yang
+     * dipakai bersama oleh seluruh format export.
+     *
+     * @return array<string, mixed>
+     */
+    private function exportData(Request $request): array
+    {
+        [$dari, $sampai] = $this->periode($request);
+
+        $transaksi = $this->query($dari, $sampai)
+            ->with(['details.product'])
+            ->latest('transaction_date')
+            ->latest('id')
+            ->get();
+
+        $rows = [];
+
+        foreach ($transaksi as $transaction) {
+            $tanggal = $transaction->date?->format('d/m/Y H:i') ?? '-';
+            $kasir = $transaction->user?->name ?? 'Petugas';
+
+            if ($transaction->details->isEmpty()) {
+                $rows[] = [$tanggal, $transaction->transaction_code, $kasir, '-', 0, 0, 0];
+
+                continue;
+            }
+
+            foreach ($transaction->details as $detail) {
+                $rows[] = [
+                    $tanggal,
+                    $transaction->transaction_code,
+                    $kasir,
+                    $detail->product?->name ?? 'Produk dihapus',
+                    (int) $detail->quantity,
+                    (int) $detail->price,
+                    (int) $detail->subtotal,
+                ];
+            }
+        }
+
+        return [
+            'title' => 'Laporan Penjualan',
+            'period' => [
+                'dari' => Carbon::parse($dari)->format('d/m/Y'),
+                'sampai' => Carbon::parse($sampai)->format('d/m/Y'),
+            ],
+            'printed_at' => Carbon::now()->format('d/m/Y H:i'),
+            'columns' => ['Tanggal', 'Kode', 'Kasir', 'Produk', 'Qty', 'Harga', 'Subtotal'],
+            'rows' => $rows,
+            'summary' => [
+                ['Total Transaksi', (int) $transaksi->count()],
+                ['Total Pendapatan', 'Rp'.number_format((int) $transaksi->sum('total'), 0, ',', '.')],
+            ],
+        ];
+    }
+
+    private function download(string $binary, string $extension): Response
+    {
+        $filename = 'laporan-penjualan-'.Carbon::now()->format('Ymd-His').'.'.$extension;
+
+        return response($binary, 200, [
+            'Content-Type' => $this->mimeFor($extension),
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+            'Content-Length' => (string) strlen($binary),
+        ]);
+    }
+
+    private function mimeFor(string $extension): string
+    {
+        return match ($extension) {
+            'pdf' => 'application/pdf',
+            'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            default => 'application/octet-stream',
+        };
+    }
+
+    private function query(string $dari, string $sampai): Builder
     {
         return Transaction::query()
             ->with('user')
@@ -71,9 +177,9 @@ class ReportController extends Controller
     /**
      * Pendapatan per tanggal pada rentang yang dipilih.
      *
-     * @return \Illuminate\Support\Collection<int, array<string, mixed>>
+     * @return Collection<int, array<string, mixed>>
      */
-    private function grafikHarian(string $dari, string $sampai): \Illuminate\Support\Collection
+    private function grafikHarian(string $dari, string $sampai): Collection
     {
         $mulai = Carbon::parse($dari)->locale('id')->startOfDay();
         $akhir = Carbon::parse($sampai)->locale('id')->startOfDay();

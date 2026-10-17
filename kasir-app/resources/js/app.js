@@ -38,9 +38,98 @@ if (cashier) {
 	const checkoutButton = cashier.querySelector('[data-checkout-submit]');
 	const checkoutForm = cashier.querySelector('[data-checkout-form]');
 	const emptyMessage = cashier.querySelector('[data-cart-empty]');
+	const barcodeInput = cashier.querySelector('[data-barcode-input]');
+	const scanMessage = cashier.querySelector('[data-scan-message]');
+	const scanEndpoint = cashier.dataset.barcodeEndpoint;
+	const scanQueue = [];
+	let scanning = false;
 	const rupiah = new Intl.NumberFormat('id-ID');
 	const formatRupiah = (value) => `Rp${rupiah.format(value)}`;
 	const total = () => [...cart.values()].reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+	function focusScanner() {
+		barcodeInput?.focus();
+	}
+
+	function showScanMessage(text, tone = 'muted') {
+		if (!scanMessage) return;
+
+		scanMessage.textContent = text;
+		scanMessage.classList.remove('hidden', 'text-success', 'text-danger', 'text-muted');
+		scanMessage.classList.add(tone === 'error' ? 'text-danger' : tone === 'success' ? 'text-success' : 'text-muted');
+	}
+
+	/**
+	 * Barcode selalu diproses berurutan agar scan cepat tidak saling menimpa.
+	 */
+	function enqueueScan(value) {
+		const code = value.trim();
+		if (barcodeInput) barcodeInput.value = '';
+
+		if (code !== '') {
+			scanQueue.push(code);
+			processScanQueue();
+		}
+
+		focusScanner();
+	}
+
+	async function processScanQueue() {
+		if (scanning) return;
+		scanning = true;
+
+		while (scanQueue.length > 0) {
+			await scanBarcode(scanQueue.shift());
+		}
+
+		scanning = false;
+		focusScanner();
+	}
+
+	async function scanBarcode(code) {
+		const existing = findItemByCode(code);
+		const quantity = existing ? existing.quantity : 0;
+
+		try {
+			const response = await fetch(`${scanEndpoint}?code=${encodeURIComponent(code)}&quantity=${quantity}`, {
+				headers: { Accept: 'application/json' },
+			});
+			const payload = await response.json();
+
+			if (!response.ok) {
+				showScanMessage(payload.message ?? 'Barcode tidak dapat diproses.', 'error');
+				return;
+			}
+
+			if (existing) {
+				existing.name = payload.product.name;
+				existing.price = payload.product.price;
+				existing.stock = payload.product.stock;
+				existing.quantity = payload.quantity;
+				cart.set(existing.id, existing);
+			} else {
+				cart.set(payload.product.id, {
+					id: payload.product.id,
+					code: payload.product.code,
+					name: payload.product.name,
+					price: payload.product.price,
+					stock: payload.product.stock,
+					quantity: payload.quantity,
+				});
+			}
+
+			showScanMessage(payload.message, 'success');
+			renderCart();
+		} catch (error) {
+			showScanMessage('Gagal menghubungi server. Coba scan ulang.', 'error');
+		}
+	}
+
+	function findItemByCode(code) {
+		const needle = code.toUpperCase();
+
+		return [...cart.values()].find((item) => String(item.code ?? '').toUpperCase() === needle);
+	}
 
 	function renderCart() {
 		rows.replaceChildren();
@@ -127,6 +216,7 @@ if (cashier) {
 			const id = Number(button.dataset.id);
 			const item = cart.get(id) ?? {
 				id,
+				code: button.dataset.code,
 				name: button.dataset.name,
 				price: Number(button.dataset.price),
 				stock: Number(button.dataset.stock),
@@ -137,8 +227,24 @@ if (cashier) {
 				item.quantity += 1;
 				cart.set(id, item);
 				renderCart();
+			} else {
+				showScanMessage('Jumlah produk sudah mencapai stok maksimum.', 'error');
 			}
 		});
+	});
+
+	barcodeInput?.addEventListener('keydown', (event) => {
+		if (event.key === 'Enter') {
+			event.preventDefault();
+			enqueueScan(barcodeInput.value);
+		}
+	});
+
+	// Klik di area netral selalu mengembalikan fokus ke scanner agar siap scan berikutnya.
+	document.addEventListener('click', (event) => {
+		if (!barcodeInput || event.target.closest('input, button, a, select, textarea, label')) return;
+
+		focusScanner();
 	});
 
 	paymentInput.addEventListener('input', updatePayment);
@@ -146,4 +252,5 @@ if (cashier) {
 		if (checkoutButton.disabled) event.preventDefault();
 	});
 	renderCart();
+	focusScanner();
 }

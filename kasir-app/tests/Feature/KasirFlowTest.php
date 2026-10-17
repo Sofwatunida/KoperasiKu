@@ -57,7 +57,7 @@ class KasirFlowTest extends TestCase
         $this->assertGuest();
     }
 
-    public function test_guest_can_register_a_petugas_account(): void
+    public function test_guest_can_register_a_kasir_account(): void
     {
         $this->get(route('register'))->assertOk()->assertSee('Buat akun baru');
 
@@ -71,7 +71,7 @@ class KasirFlowTest extends TestCase
 
         $user = User::query()->where('username', 'dewi_lestari')->firstOrFail();
         $this->assertAuthenticatedAs($user);
-        $this->assertSame('petugas', $user->role);
+        $this->assertSame('kasir', $user->role);
         $this->assertTrue(Hash::check('password123', $user->password));
     }
 
@@ -199,7 +199,7 @@ class KasirFlowTest extends TestCase
             'username' => 'siti',
             'email' => 'siti@example.test',
             'password' => 'password',
-            'role' => 'petugas',
+            'role' => 'kasir',
         ]);
     }
 
@@ -214,5 +214,4 @@ class KasirFlowTest extends TestCase
             'unit' => 'pcs',
         ], $overrides);
     }
-
 }

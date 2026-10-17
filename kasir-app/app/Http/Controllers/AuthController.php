@@ -36,7 +36,7 @@ class AuthController extends Controller
             'username' => $data['username'],
             'email' => $data['email'],
             'password' => $data['password'],
-            'role' => 'petugas',
+            'role' => User::ROLE_KASIR,
         ]);
 
         Auth::login($user);
@@ -48,18 +48,32 @@ class AuthController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $credentials = $request->validate([
-            'username' => ['required', 'string'],
+            'username' => ['nullable', 'string'],
+            'email' => ['nullable', 'string', 'email'],
             'password' => ['required', 'string'],
         ], [], [
-            'username' => 'username',
+            'username' => 'email atau username',
             'password' => 'password',
         ]);
 
-        $user = User::query()->where('username', $credentials['username'])->first();
+        $identifier = trim((string) ($credentials['username'] ?? ''));
+
+        if ($identifier === '') {
+            $identifier = trim((string) ($credentials['email'] ?? ''));
+        }
+
+        if ($identifier === '') {
+            throw ValidationException::withMessages([
+                'username' => 'Email atau username wajib diisi.',
+            ]);
+        }
+
+        $user = User::query()->where('email', $identifier)->first()
+            ?? User::query()->where('username', $identifier)->first();
 
         if (! $user || ! Hash::check($credentials['password'], $user->password)) {
             throw ValidationException::withMessages([
-                'username' => 'Username atau password salah.',
+                'username' => 'Email/username atau password salah.',
             ]);
         }
 

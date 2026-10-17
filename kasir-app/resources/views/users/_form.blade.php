@@ -1,0 +1,15 @@
+@php $user = $user ?? null; $editing = $user !== null; @endphp
+<form action="{{ $editing ? route('users.update', $user) : route('users.store') }}" method="post" class="card">
+    @csrf
+    @if ($editing) @method('PUT') @endif
+    <div class="card-header"><div><h2 class="card-title">{{ $editing ? 'Informasi Pengguna' : 'Informasi Pengguna Baru' }}</h2><p class="mt-1 text-xs text-muted">Role menentukan akses: super admin untuk akses penuh, admin untuk pengelola, kasir untuk transaksi.</p></div></div>
+    <div class="grid gap-5 p-5 sm:grid-cols-2">
+        <div><label class="label" for="name">Nama Lengkap</label><input class="input @error('name') input-error @enderror" id="name" name="name" value="{{ old('name', $user?->name) }}" required>@error('name') <p class="field-error">{{ $message }}</p> @enderror</div>
+        <div><label class="label" for="username">Username</label><input class="input @error('username') input-error @enderror" id="username" name="username" value="{{ old('username', $user?->username) }}" maxlength="50" pattern="[a-zA-Z0-9_\-]+" title="Hanya huruf, angka, garis bawah, dan strip." required>@error('username') <p class="field-error">{{ $message }}</p> @enderror</div>
+        <div class="sm:col-span-2"><label class="label" for="email">Email</label><input class="input @error('email') input-error @enderror" id="email" name="email" type="email" value="{{ old('email', $user?->email) }}" required>@error('email') <p class="field-error">{{ $message }}</p> @enderror</div>
+        <div><label class="label" for="role">Role</label><select class="select @error('role') input-error @enderror" id="role" name="role" required>@foreach ($roles as $role)<option value="{{ $role }}" @selected(old('role', $user?->role) === $role)>{{ \App\Models\User::ROLE_LABELS[$role] ?? Illuminate\Support\Str::headline($role) }}</option>@endforeach</select>@error('role') <p class="field-error">{{ $message }}</p> @enderror</div>
+        <div><label class="label" for="password">Password</label><input class="input @error('password') input-error @enderror" id="password" name="password" type="password" autocomplete="new-password" minlength="8" @if (! $editing) required @endif placeholder="{{ $editing ? 'Kosongkan jika tidak diubah' : '' }}">@error('password') <p class="field-error">{{ $message }}</p> @enderror</div>
+        <div class="sm:col-span-2"><label class="label" for="password_confirmation">Konfirmasi Password</label><input class="input" id="password_confirmation" name="password_confirmation" type="password" autocomplete="new-password" minlength="8" @if (! $editing) required @endif>@error('password_confirmation') <p class="field-error">{{ $message }}</p> @enderror</div>
+    </div>
+    <div class="flex flex-wrap justify-end gap-3 border-t border-line px-5 py-4"><a class="btn-secondary" href="{{ route('users.index') }}">Batal</a><button class="btn-primary" type="submit">{{ $editing ? 'Update Pengguna' : 'Simpan Pengguna' }}</button></div>
+</form>

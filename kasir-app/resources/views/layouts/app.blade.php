@@ -17,6 +17,10 @@
                 ['label' => 'Laporan', 'route' => 'reports.index', 'icon' => 'chart'],
                 ['label' => 'Pengaturan', 'route' => 'settings.index', 'icon' => 'settings'],
             ];
+
+            if (auth()->user()->hasAdminAccess()) {
+                array_splice($navigation, 4, 0, [['label' => 'Pengguna', 'route' => 'users.index', 'icon' => 'users']]);
+            }
         @endphp
         <div class="min-h-screen lg:flex">
             <button id="sidebar-backdrop" class="fixed inset-0 z-30 hidden bg-navy/50 lg:hidden" type="button" aria-label="Tutup menu"></button>
@@ -34,6 +38,7 @@
                                 'products.index' => request()->routeIs('products.*'),
                                 'cashier.index' => request()->routeIs('cashier.*', 'transactions.*'),
                                 'reports.index' => request()->routeIs('reports.*'),
+                                'users.index' => request()->routeIs('users.*'),
                                 default => request()->routeIs('settings.*'),
                             };
                         @endphp
@@ -44,6 +49,7 @@
                                     @case('box') <svg viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5 9-5Z"/><path d="m3 8 9 5 9-5M3 8v9l9 5 9-5V8M12 13v9"/></svg> @break
                                     @case('cart') <svg viewBox="0 0 24 24"><circle cx="9" cy="20" r="1"/><circle cx="19" cy="20" r="1"/><path d="M2 3h2l2.7 12.4a2 2 0 0 0 2 1.6h9.8a2 2 0 0 0 2-1.6L22 8H5"/></svg> @break
                                     @case('chart') <svg viewBox="0 0 24 24"><path d="M3 3v18h18M8 15l4-4 3 3 6-7"/></svg> @break
+                                    @case('users') <svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg> @break
                                     @default <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="m19.4 15 .1.1 1.4 1.1-1.4 2.4-1.7-.7a8 8 0 0 1-1.7 1l-.3 1.8h-2.8l-.3-1.8a8 8 0 0 1-1.7-1l-1.7.7-1.4-2.4 1.4-1.1a7 7 0 0 1 0-2l-1.4-1.1 1.4-2.4 1.7.7a8 8 0 0 1 1.7-1l.3-1.8h2.8l.3 1.8a8 8 0 0 1 1.7 1l1.7-.7 1.4 2.4-1.4 1.1a7 7 0 0 1 0 2Z"/></svg>
                                 @endswitch
                             </span>
@@ -54,11 +60,11 @@
                 <div class="border-t border-white/10 p-3">
                     <div class="mb-3 flex items-center gap-3 rounded-lg bg-white/5 px-3 py-3">
                         <span class="grid size-9 shrink-0 place-items-center rounded-full bg-slate-700 text-xs font-semibold">{{ auth()->user()->initials }}</span>
-                        <span class="min-w-0"><span class="block truncate text-sm font-medium">{{ auth()->user()->name }}</span><span class="block text-xs capitalize text-slate-400">{{ auth()->user()->role }}</span></span>
+                        <span class="min-w-0"><span class="block truncate text-sm font-medium">{{ auth()->user()->name }}</span><span class="block text-xs text-slate-400">{{ auth()->user()->role_label }}</span></span>
                     </div>
                     <form action="{{ route('logout') }}" method="post">
                         @csrf
-                        <button class="sidebar-link w-full text-left" type="submit"><span class="text-base" aria-hidden="true">↪</span><span>Keluar</span></button>
+                        <button class="sidebar-link w-full text-left" type="submit"><span>Keluar</span></button>
                     </form>
                 </div>
             </aside>
@@ -76,7 +82,7 @@
                                 @if ($jumlahStokRendah > 0)<span class="absolute right-1 top-1 grid min-w-4 place-items-center rounded-full bg-danger px-1 text-[9px] font-bold leading-4 text-white">{{ $jumlahStokRendah }}</span>@endif
                             @endisset
                         </a>
-                        <span class="hidden text-right sm:block"><span class="block text-sm font-semibold">{{ auth()->user()->name }}</span><span class="block text-xs capitalize text-muted">{{ auth()->user()->role }}</span></span>
+                        <span class="hidden text-right sm:block"><span class="block text-sm font-semibold">{{ auth()->user()->name }}</span><span class="block text-xs text-muted">{{ auth()->user()->role_label }}</span></span>
                         <span class="grid size-9 place-items-center rounded-full bg-primary-light text-xs font-bold text-primary">{{ auth()->user()->initials }}</span>
                     </div>
                 </header>
