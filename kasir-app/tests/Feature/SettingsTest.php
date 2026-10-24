@@ -13,13 +13,13 @@ class SettingsTest extends TestCase
 
     public function test_user_can_open_the_account_settings_page(): void
     {
-        $user = $this->createUser(['role' => 'kasir']);
+        $user = $this->createUser(['role' => 'super_admin']);
 
         $this->actingAs($user)
             ->get(route('settings.index'))
             ->assertOk()
             ->assertSee('Pengaturan Akun')
-            ->assertSee('Kasir');
+            ->assertSee('Super Admin');
     }
 
     public function test_user_can_change_email_without_changing_role(): void
@@ -109,7 +109,7 @@ class SettingsTest extends TestCase
 
         $user->refresh();
         $this->assertTrue(Hash::check('rahasia123', $user->password));
-        $this->assertSame('kasir', $user->role);
+        $this->assertSame('super_admin', $user->role);
 
         $this->post(route('logout'));
         $this->post(route('login'), ['username' => $user->email, 'password' => 'rahasia123'])
@@ -151,17 +151,67 @@ class SettingsTest extends TestCase
         $this->assertSame('Nama Baru', $user->fresh()->name);
     }
 
+    public function test_admin_cannot_open_account_settings_page(): void
+    {
+        $this->actingAs($this->createUser(['role' => 'admin']))
+            ->get(route('settings.index'))
+            ->assertRedirect(route('dashboard'))
+            ->assertSessionHas('error');
+    }
+
+    public function test_kasir_cannot_open_account_settings_page(): void
+    {
+        $this->actingAs($this->createUser(['role' => 'kasir']))
+            ->get(route('settings.index'))
+            ->assertRedirect(route('dashboard'))
+            ->assertSessionHas('error');
+    }
+
+    public function test_admin_cannot_update_account_settings(): void
+    {
+        $user = $this->createUser(['role' => 'admin']);
+
+        $this->actingAs($user)
+            ->put(route('settings.update'), [
+                'name' => $user->name,
+                'username' => $user->username,
+                'email' => 'admin-baru@example.test',
+                'current_password' => 'password',
+            ])
+            ->assertRedirect(route('dashboard'))
+            ->assertSessionHas('error');
+
+        $this->assertSame($user->email, $user->fresh()->email);
+    }
+
+    public function test_kasir_cannot_update_account_settings(): void
+    {
+        $user = $this->createUser(['role' => 'kasir']);
+
+        $this->actingAs($user)
+            ->put(route('settings.update'), [
+                'name' => $user->name,
+                'username' => $user->username,
+                'email' => 'kasir-baru@example.test',
+                'current_password' => 'password',
+            ])
+            ->assertRedirect(route('dashboard'))
+            ->assertSessionHas('error');
+
+        $this->assertSame($user->email, $user->fresh()->email);
+    }
+
     private function createUser(array $overrides = []): User
     {
         static $counter = 0;
         $counter++;
 
         return User::create(array_merge([
-            'name' => "Kasir {$counter}",
-            'username' => "kasir{$counter}",
-            'email' => "kasir{$counter}@example.test",
+            'name' => "Super Admin {$counter}",
+            'username' => "superadmin{$counter}",
+            'email' => "superadmin{$counter}@example.test",
             'password' => 'password',
-            'role' => 'kasir',
+            'role' => 'super_admin',
         ], $overrides));
     }
 }

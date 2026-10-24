@@ -30,7 +30,6 @@ class KasirFlowTest extends TestCase
         $this->get(route('transactions.index'))->assertOk()->assertSee('Riwayat Transaksi');
         $this->get(route('reports.index'))->assertOk()->assertSee('Laporan Penjualan');
         $this->get(route('reports.print'))->assertOk()->assertSee('KOPERASIKU');
-        $this->get(route('settings.index'))->assertOk()->assertSee('Pengaturan Akun');
     }
 
     public function test_low_stock_filter_only_lists_products_at_or_below_the_threshold(): void

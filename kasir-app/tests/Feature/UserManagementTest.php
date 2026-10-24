@@ -34,22 +34,26 @@ class UserManagementTest extends TestCase
         $this->get(route('users.create'))->assertOk();
     }
 
-    public function test_admin_can_list_users(): void
+    public function test_admin_only_sees_kasir_accounts_in_user_management(): void
     {
         $admin = $this->createUser(['name' => 'Admin Utama', 'role' => 'admin']);
-        $this->createUser(['name' => 'Kasir Satu', 'username' => 'kasir1', 'email' => 'kasir1@example.test']);
+        $superAdmin = $this->createUser(['username' => 'super1', 'email' => 'super1@example.test', 'role' => 'super_admin']);
+        $otherAdmin = $this->createUser(['username' => 'admin2', 'email' => 'admin2@example.test', 'role' => 'admin']);
+        $kasir = $this->createUser(['name' => 'Kasir Satu', 'username' => 'kasir_satu', 'email' => 'kasir_satu@example.test']);
 
         $this->actingAs($admin)
             ->get(route('users.index'))
             ->assertOk()
             ->assertSee('Manajemen Pengguna')
-            ->assertSee('Admin Utama')
             ->assertSee('Kasir Satu')
-            ->assertSee('1 admin')
-            ->assertSee('1 kasir');
+            ->assertSee('1 kasir')
+            ->assertSee(route('users.edit', $kasir), false)
+            ->assertDontSee(route('users.edit', $admin), false)
+            ->assertDontSee(route('users.edit', $superAdmin), false)
+            ->assertDontSee(route('users.edit', $otherAdmin), false);
     }
 
-    public function test_admin_can_create_kasir_and_admin_accounts(): void
+    public function test_admin_can_create_kasir_accounts_but_not_admin_accounts(): void
     {
         $this->actingAs($this->createUser(['role' => 'admin']));
 
@@ -65,9 +69,9 @@ class UserManagementTest extends TestCase
             'username' => 'admin_baru',
             'email' => 'admin_baru@example.test',
             'role' => 'admin',
-        ]))->assertRedirect(route('users.index'));
+        ]))->assertSessionHasErrors('role');
 
-        $this->assertDatabaseHas('users', ['username' => 'admin_baru', 'role' => 'admin']);
+        $this->assertDatabaseMissing('users', ['username' => 'admin_baru']);
     }
 
     public function test_admin_cannot_create_super_admin_accounts(): void
@@ -94,7 +98,7 @@ class UserManagementTest extends TestCase
         $this->assertDatabaseCount('users', 2);
     }
 
-    public function test_admin_can_update_role_email_and_password(): void
+    public function test_admin_can_update_kasir_email_and_password(): void
     {
         $admin = $this->createUser(['role' => 'admin']);
         $kasir = $this->createUser(['username' => 'kasir_lama', 'email' => 'lama@example.test']);
@@ -103,7 +107,7 @@ class UserManagementTest extends TestCase
             ->put(route('users.update', $kasir), $this->userData([
                 'username' => 'kasir_lama',
                 'email' => 'baru@example.test',
-                'role' => 'admin',
+                'role' => 'kasir',
                 'password' => 'rahasia123',
                 'password_confirmation' => 'rahasia123',
             ]))
@@ -111,7 +115,7 @@ class UserManagementTest extends TestCase
             ->assertSessionHasNoErrors();
 
         $kasir->refresh();
-        $this->assertSame('admin', $kasir->role);
+        $this->assertSame('kasir', $kasir->role);
         $this->assertSame('baru@example.test', $kasir->email);
         $this->assertTrue(Hash::check('rahasia123', $kasir->password));
     }
@@ -133,26 +137,38 @@ class UserManagementTest extends TestCase
         $this->assertTrue(Hash::check('password', $kasir->fresh()->password));
     }
 
-    public function test_admin_cannot_delete_own_account(): void
+    public function test_super_admin_cannot_delete_own_account(): void
     {
-        $admin = $this->createUser(['role' => 'admin']);
+        $superAdmin = $this->createUser(['role' => 'super_admin']);
 
-        $this->actingAs($admin)
-            ->delete(route('users.destroy', $admin))
+        $this->actingAs($superAdmin)
+            ->delete(route('users.destroy', $superAdmin))
             ->assertSessionHas('error');
 
-        $this->assertDatabaseHas('users', ['id' => $admin->id]);
+        $this->assertDatabaseHas('users', ['id' => $superAdmin->id]);
     }
 
-    public function test_admin_cannot_demote_or_delete_the_last_admin(): void
+    public function test_admin_cannot_manage_own_account_in_user_management(): void
     {
         $admin = $this->createUser(['role' => 'admin']);
 
-        $this->actingAs($admin)
+        $this->actingAs($admin)->get(route('users.edit', $admin))->assertForbidden();
+        $this->actingAs($admin)->delete(route('users.destroy', $admin))->assertForbidden();
+    }
+
+    public function test_super_admin_cannot_demote_or_delete_the_last_admin(): void
+    {
+        $superAdmin = $this->createUser(['role' => 'super_admin']);
+        $admin = $this->createUser(['role' => 'admin']);
+
+        $this->actingAs($superAdmin)
             ->put(route('users.update', $admin), $this->userData([
+                'name' => $admin->name,
                 'username' => $admin->username,
                 'email' => $admin->email,
                 'role' => 'kasir',
+                'password' => '',
+                'password_confirmation' => '',
             ]))
             ->assertSessionHas('error');
 
@@ -176,6 +192,76 @@ class UserManagementTest extends TestCase
             ->assertForbidden();
 
         $this->assertDatabaseHas('users', ['id' => $superAdmin->id]);
+    }
+
+    public function test_admin_cannot_manage_another_admin_account(): void
+    {
+        $admin = $this->createUser(['role' => 'admin']);
+        $otherAdmin = $this->createUser([
+            'name' => 'Admin Lain',
+            'username' => 'admin_lain',
+            'email' => 'admin_lain@example.test',
+            'role' => 'admin',
+        ]);
+
+        $this->actingAs($admin)->get(route('users.edit', $otherAdmin))->assertForbidden();
+
+        $this->actingAs($admin)
+            ->put(route('users.update', $otherAdmin), $this->userData([
+                'name' => $otherAdmin->name,
+                'username' => $otherAdmin->username,
+                'email' => $otherAdmin->email,
+                'role' => 'admin',
+                'password' => 'rahasia123',
+                'password_confirmation' => 'rahasia123',
+            ]))
+            ->assertForbidden();
+
+        $this->actingAs($admin)->delete(route('users.destroy', $otherAdmin))->assertForbidden();
+
+        $this->assertSame('admin', $otherAdmin->fresh()->role);
+        $this->assertTrue(Hash::check('password', $otherAdmin->fresh()->password));
+    }
+
+    public function test_admin_cannot_change_super_admin_password(): void
+    {
+        $admin = $this->createUser(['role' => 'admin']);
+        $superAdmin = $this->createUser([
+            'username' => 'superadmin',
+            'email' => 'super@example.test',
+            'role' => 'super_admin',
+        ]);
+
+        $this->actingAs($admin)
+            ->put(route('users.update', $superAdmin), $this->userData([
+                'name' => $superAdmin->name,
+                'username' => $superAdmin->username,
+                'email' => $superAdmin->email,
+                'role' => 'super_admin',
+                'password' => 'rahasia123',
+                'password_confirmation' => 'rahasia123',
+            ]))
+            ->assertForbidden();
+
+        $this->assertTrue(Hash::check('password', $superAdmin->fresh()->password));
+    }
+
+    public function test_super_admin_can_manage_all_roles(): void
+    {
+        $superAdmin = $this->createUser(['role' => 'super_admin']);
+        $admin = $this->createUser([
+            'username' => 'admin_lain',
+            'email' => 'admin_lain@example.test',
+            'role' => 'admin',
+        ]);
+        $kasir = $this->createUser(['username' => 'kasir_lain', 'email' => 'kasir_lain@example.test']);
+
+        $this->actingAs($superAdmin)
+            ->get(route('users.index'))
+            ->assertOk()
+            ->assertSee(route('users.edit', $superAdmin), false)
+            ->assertSee(route('users.edit', $admin), false)
+            ->assertSee(route('users.edit', $kasir), false);
     }
 
     public function test_user_with_transaction_history_cannot_be_deleted(): void

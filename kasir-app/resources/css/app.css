@@ -49,6 +49,39 @@
     --shadow-pop: 0 10px 25px -5px rgb(15 23 42 / 0.12);
 }
 
+/*
+|--------------------------------------------------------------------------
+| Mode Gelap (Dark Mode)
+|--------------------------------------------------------------------------
+| Nilai token warna di-override sehingga semua utilitas & komponen yang
+| memakai token ikut berubah otomatis dan warna tetap konsisten.
+*/
+[data-theme='dark'] {
+    color-scheme: dark;
+
+    /* Permukaan */
+    --color-canvas: #0b1222;
+    --color-surface: #111c33;
+    --color-line: #243352;
+
+    /* Teks */
+    --color-ink: #e6edf9;
+    --color-muted: #93a4c3;
+
+    /* Sidebar */
+    --color-navy: #070d1c;
+    --color-navy-soft: #16233f;
+
+    /* Aksen & status (latar lembut dibuat kontras di atas gelap) */
+    --color-primary-light: #1c3767;
+    --color-success: #4ade80;
+    --color-success-soft: #0d3123;
+    --color-danger: #f87171;
+    --color-danger-soft: #3c1618;
+    --color-warning: #fbbf24;
+    --color-warning-soft: #3a2c0d;
+}
+
 @layer base {
     html {
         -webkit-text-size-adjust: 100%;
@@ -234,7 +267,7 @@
     }
 
     .quantity-button {
-        @apply grid size-8 place-items-center rounded-field border border-line bg-white text-base font-semibold
+        @apply grid size-8 place-items-center rounded-field border border-line bg-surface text-base font-semibold
             text-ink hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-40;
     }
 
@@ -263,6 +296,20 @@
         @apply pointer-events-auto flex items-start gap-3 rounded-field border border-line bg-surface px-4 py-3 shadow-pop;
     }
 
+    /* ---------- Dropdown (preferensi tema & bahasa) ---------- */
+    .dropdown-heading {
+        @apply px-3 pt-2 pb-1.5 text-[11px] font-semibold tracking-wider text-muted uppercase;
+    }
+
+    .dropdown-item {
+        @apply flex cursor-pointer items-center gap-2.5 rounded-field px-3 py-2 text-sm font-medium text-ink transition
+            hover:bg-canvas;
+    }
+
+    .dropdown-item[aria-current='true'] {
+        @apply bg-primary-light font-semibold text-primary;
+    }
+
     /* ---------- Cetak ---------- */
     .print-area {
         @apply bg-white p-6 text-ink;
@@ -289,5 +336,43 @@
 
     body {
         background: #ffffff !important;
+    }
+}
+
+/*
+|--------------------------------------------------------------------------
+| Sidebar: hidden & shown (collapse pada layar besar)
+|--------------------------------------------------------------------------
+| State disimpan pada cookie (lihat rute sidebar.toggle) dan dirender
+| sebagai class body sehingga tidak ada pergeseran tampilan saat memuat.
+*/
+.app-content {
+    padding-left: 0;
+}
+
+@media (min-width: 1024px) {
+    .app-content {
+        padding-left: 16rem;
+    }
+
+    body.sidebar-collapsed .app-content {
+        padding-left: 5rem;
+    }
+
+    body.sidebar-collapsed .app-sidebar {
+        width: 5rem;
+    }
+
+    body.sidebar-collapsed .app-sidebar .sidebar-label,
+    body.sidebar-collapsed .app-sidebar .sidebar-heading {
+        display: none;
+    }
+
+    body.sidebar-collapsed .app-sidebar .sidebar-link {
+        @apply justify-center px-0;
+    }
+
+    body.sidebar-collapsed .app-sidebar > a {
+        @apply justify-center px-0;
     }
 }

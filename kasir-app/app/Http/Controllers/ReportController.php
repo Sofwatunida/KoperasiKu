@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Product;
 use App\Models\Transaction;
+use App\Models\User;
 use App\Services\ReportExporter;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -15,37 +17,49 @@ class ReportController extends Controller
 {
     public function index(Request $request): View
     {
-        [$dari, $sampai] = $this->periode($request);
+        [$dari, $sampai, $kasirId] = $this->periode($request);
 
-        $transaksi = $this->query($dari, $sampai);
+        $transaksi = $this->query($dari, $sampai, $kasirId);
 
         $totalTransaksi = (clone $transaksi)->count();
         $totalPendapatan = (int) (clone $transaksi)->sum('total');
+        $totalItemTerjual = (int) (clone $transaksi)->withSum('details as jumlah_item', 'quantity')->get()->sum('jumlah_item');
 
-        $grafik = $this->grafikHarian($dari, $sampai);
+        $grafik = $this->grafikHarian($dari, $sampai, $kasirId);
 
         return view('reports.index', [
-            'transaksi' => (clone $transaksi)->latest('transaction_date')->latest('id')->get(),
+            'transaksi' => (clone $transaksi)->with(['details.product'])->latest('transaction_date')->latest('id')->get(),
             'dari' => $dari,
             'sampai' => $sampai,
+            'kasirId' => $kasirId,
+            'kasirList' => User::orderBy('name')->get(['id', 'name']),
             'totalTransaksi' => $totalTransaksi,
             'totalPendapatan' => $totalPendapatan,
+            'totalItemTerjual' => $totalItemTerjual,
+            'rataRataTransaksi' => $totalTransaksi > 0 ? (int) round($totalPendapatan / $totalTransaksi) : 0,
+            'produkTerlaris' => $this->produkTerlaris($dari, $sampai, $kasirId),
             'grafik' => $grafik,
         ]);
     }
 
     public function print(Request $request): View
     {
-        [$dari, $sampai] = $this->periode($request);
+        [$dari, $sampai, $kasirId] = $this->periode($request);
 
-        $transaksi = $this->query($dari, $sampai);
+        $transaksi = $this->query($dari, $sampai, $kasirId);
+
+        $totalTransaksi = (clone $transaksi)->count();
+        $totalPendapatan = (int) (clone $transaksi)->sum('total');
 
         return view('reports.print', [
-            'transaksi' => $transaksi->latest('transaction_date')->latest('id')->get(),
+            'transaksi' => $transaksi->with(['details.product'])->latest('transaction_date')->latest('id')->get(),
             'dari' => $dari,
             'sampai' => $sampai,
-            'totalTransaksi' => (clone $transaksi)->count(),
-            'totalPendapatan' => (int) (clone $transaksi)->sum('total'),
+            'kasirId' => $kasirId,
+            'totalTransaksi' => $totalTransaksi,
+            'totalPendapatan' => $totalPendapatan,
+            'totalItemTerjual' => (int) (clone $transaksi)->withSum('details as jumlah_item', 'quantity')->get()->sum('jumlah_item'),
+            'rataRataTransaksi' => $totalTransaksi > 0 ? (int) round($totalPendapatan / $totalTransaksi) : 0,
         ]);
     }
 
@@ -81,9 +95,9 @@ class ReportController extends Controller
      */
     private function exportData(Request $request): array
     {
-        [$dari, $sampai] = $this->periode($request);
+        [$dari, $sampai, $kasirId] = $this->periode($request);
 
-        $transaksi = $this->query($dari, $sampai)
+        $transaksi = $this->query($dari, $sampai, $kasirId)
             ->with(['details.product'])
             ->latest('transaction_date')
             ->latest('id')
@@ -93,7 +107,7 @@ class ReportController extends Controller
 
         foreach ($transaksi as $transaction) {
             $tanggal = $transaction->date?->format('d/m/Y H:i') ?? '-';
-            $kasir = $transaction->user?->name ?? 'Petugas';
+            $kasir = $transaction->user?->name ?? __('report.unknown_cashier');
 
             if ($transaction->details->isEmpty()) {
                 $rows[] = [$tanggal, $transaction->transaction_code, $kasir, '-', 0, 0, 0];
@@ -106,7 +120,7 @@ class ReportController extends Controller
                     $tanggal,
                     $transaction->transaction_code,
                     $kasir,
-                    $detail->product?->name ?? 'Produk dihapus',
+                    $detail->product?->name ?? __('report.deleted_product'),
                     (int) $detail->quantity,
                     (int) $detail->price,
                     (int) $detail->subtotal,
@@ -115,17 +129,25 @@ class ReportController extends Controller
         }
 
         return [
-            'title' => 'Laporan Penjualan',
+            'title' => __('report.title'),
             'period' => [
                 'dari' => Carbon::parse($dari)->format('d/m/Y'),
                 'sampai' => Carbon::parse($sampai)->format('d/m/Y'),
             ],
             'printed_at' => Carbon::now()->format('d/m/Y H:i'),
-            'columns' => ['Tanggal', 'Kode', 'Kasir', 'Produk', 'Qty', 'Harga', 'Subtotal'],
+            'columns' => [
+                __('report.columns.date'),
+                __('report.columns.code'),
+                __('report.columns.cashier'),
+                __('report.columns.product'),
+                __('report.columns.qty'),
+                __('report.columns.price'),
+                __('report.columns.subtotal'),
+            ],
             'rows' => $rows,
             'summary' => [
-                ['Total Transaksi', (int) $transaksi->count()],
-                ['Total Pendapatan', 'Rp'.number_format((int) $transaksi->sum('total'), 0, ',', '.')],
+                [__('report.summary.total_transactions'), (int) $transaksi->count()],
+                [__('report.summary.total_revenue'), 'Rp'.number_format((int) $transaksi->sum('total'), 0, ',', '.')],
             ],
         ];
     }
@@ -151,26 +173,33 @@ class ReportController extends Controller
         };
     }
 
-    private function query(string $dari, string $sampai): Builder
+    private function query(string $dari, string $sampai, ?int $kasirId = null): Builder
     {
         return Transaction::query()
             ->with('user')
+            ->when($kasirId, fn (Builder $query) => $query->where('user_id', $kasirId))
             ->betweenDates($dari, $sampai);
     }
 
     /**
-     * @return array{0: string, 1: string}
+     * Parse filter periode aktif plus filter kasir opsional.
+     *
+     * @return array{0: string, 1: string, 2: int|null}
      */
     private function periode(Request $request): array
     {
         $filters = $request->validate([
             'dari' => ['nullable', 'date_format:Y-m-d'],
             'sampai' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:dari'],
+            'kasir' => ['nullable', 'integer', 'exists:users,id'],
         ]);
+
+        $kasirId = isset($filters['kasir']) ? (int) $filters['kasir'] : null;
 
         return [
             $filters['dari'] ?? Carbon::today()->startOfMonth()->toDateString(),
             $filters['sampai'] ?? Carbon::today()->toDateString(),
+            $kasirId,
         ];
     }
 
@@ -179,12 +208,12 @@ class ReportController extends Controller
      *
      * @return Collection<int, array<string, mixed>>
      */
-    private function grafikHarian(string $dari, string $sampai): Collection
+    private function grafikHarian(string $dari, string $sampai, ?int $kasirId = null): Collection
     {
         $mulai = Carbon::parse($dari)->locale('id')->startOfDay();
         $akhir = Carbon::parse($sampai)->locale('id')->startOfDay();
 
-        $pendapatanPerTanggal = $this->query($dari, $sampai)
+        $pendapatanPerTanggal = $this->query($dari, $sampai, $kasirId)
             ->get()
             ->groupBy(fn (Transaction $trx) => $trx->date->toDateString())
             ->map(fn ($group) => (int) $group->sum('total'));
@@ -200,5 +229,28 @@ class ReportController extends Controller
                     'value' => $pendapatanPerTanggal->get($tanggal->toDateString(), 0),
                 ];
             });
+    }
+
+    /**
+     * Lima produk terlaris pada rentang yang dipilih.
+     *
+     * @return Collection<int, array<string, mixed>>
+     */
+    private function produkTerlaris(string $dari, string $sampai, ?int $kasirId = null): Collection
+    {
+        return Product::query()
+            ->select('products.*')
+            ->selectRaw('COALESCE(SUM(transaction_details.quantity), 0) as total_qty')
+            ->join('transaction_details', 'products.id', '=', 'transaction_details.product_id')
+            ->join('transactions', 'transactions.id', '=', 'transaction_details.transaction_id')
+            ->whereBetween('transactions.transaction_date', [
+                Carbon::parse($dari)->startOfDay(),
+                Carbon::parse($sampai)->endOfDay(),
+            ])
+            ->when($kasirId, fn (Builder $query) => $query->where('transactions.user_id', $kasirId))
+            ->groupBy('products.id')
+            ->orderByDesc('total_qty')
+            ->limit(5)
+            ->get();
     }
 }

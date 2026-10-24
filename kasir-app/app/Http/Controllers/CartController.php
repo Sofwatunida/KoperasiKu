@@ -42,7 +42,7 @@ class CartController extends Controller
             'code' => ['required', 'string', 'max:100'],
             'quantity' => ['nullable', 'integer', 'min:0'],
         ], [
-            'code.required' => 'Barcode wajib diisi.',
+            'code.required' => __('cashier.barcode_required'),
         ]);
 
         $code = trim($validated['code']);
@@ -54,20 +54,20 @@ class CartController extends Controller
 
         if (! $product) {
             return response()->json([
-                'message' => 'Produk dengan barcode tersebut tidak ditemukan.',
+                'message' => __('cashier.scan_not_found'),
             ], 404);
         }
 
         if ($quantity >= $product->stock) {
             return response()->json([
-                'message' => 'Jumlah produk sudah mencapai stok maksimum.',
+                'message' => __('cashier.scan_stock_max'),
                 'product' => $this->productPayload($product),
                 'quantity' => $quantity,
             ], 422);
         }
 
         return response()->json([
-            'message' => "{$product->name} ditambahkan ke keranjang.",
+            'message' => __('cashier.scan_added', ['name' => $product->name]),
             'product' => $this->productPayload($product),
             'quantity' => $quantity + 1,
         ]);
@@ -81,9 +81,9 @@ class CartController extends Controller
             'cart.*.quantity' => ['required', 'integer', 'min:1'],
             'paid' => ['required', 'integer', 'min:0'],
         ], [
-            'cart.required' => 'Keranjang masih kosong.',
-            'cart.min' => 'Keranjang masih kosong.',
-            'paid.required' => 'Uang pembayaran wajib diisi.',
+            'cart.required' => __('cashier.cart_empty'),
+            'cart.min' => __('cashier.cart_empty'),
+            'paid.required' => __('cashier.paid_required'),
         ]);
 
         $items = collect($validated['cart'])
@@ -113,7 +113,7 @@ class CartController extends Controller
                     }
 
                     if ($item['quantity'] > $product->stock) {
-                        throw new RuntimeException("Stok {$product->name} tidak mencukupi.");
+                        throw new RuntimeException(__('cashier.stock_insufficient', ['name' => $product->name]));
                     }
 
                     $subtotal = $product->selling_price * $item['quantity'];
@@ -128,13 +128,13 @@ class CartController extends Controller
                 }
 
                 if ($rows === []) {
-                    throw new RuntimeException('Keranjang masih kosong.');
+                    throw new RuntimeException(__('cashier.cart_empty'));
                 }
 
                 $paid = (int) $validated['paid'];
 
                 if ($paid < $total) {
-                    throw new RuntimeException('Jumlah pembayaran tidak mencukupi.');
+                    throw new RuntimeException(__('cashier.paid_insufficient'));
                 }
 
                 $transaction = Transaction::create([
@@ -166,7 +166,7 @@ class CartController extends Controller
         }
 
         return redirect()->route('cashier.receipt', $transaction->id)
-            ->with('success', 'Transaksi berhasil disimpan.');
+            ->with('success', __('cashier.checkout_success'));
     }
 
     public function receipt(Transaction $transaction): View

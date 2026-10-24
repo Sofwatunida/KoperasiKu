@@ -14,9 +14,11 @@ class UserController extends Controller
 
     public function index(Request $request): View
     {
+        $actor = $request->user();
         $keyword = $request->string('search')->trim()->toString();
 
         $users = User::query()
+            ->when(! $actor->isSuperAdmin(), fn ($query) => $query->where('role', User::ROLE_KASIR))
             ->when($keyword !== '', fn ($query) => $query->where(function ($query) use ($keyword): void {
                 $query->where('name', 'like', "%{$keyword}%")
                     ->orWhere('username', 'like', "%{$keyword}%")
@@ -49,7 +51,7 @@ class UserController extends Controller
 
         User::create($data);
 
-        return redirect()->route('users.index')->with('success', 'Pengguna berhasil ditambahkan.');
+        return redirect()->route('users.index')->with('success', __('users.created'));
     }
 
     public function edit(Request $request, User $user): View
@@ -69,11 +71,11 @@ class UserController extends Controller
         $data = $request->validate($this->rules($request->user(), $user));
 
         if ($user->isAdmin() && $data['role'] !== User::ROLE_ADMIN && User::isLastAdmin($user)) {
-            return redirect()->route('users.edit', $user)->with('error', 'Minimal harus ada satu admin yang aktif.');
+            return redirect()->route('users.edit', $user)->with('error', __('users.last_admin'));
         }
 
         if ($user->isSuperAdmin() && $data['role'] !== User::ROLE_SUPER_ADMIN && User::isLastSuperAdmin($user)) {
-            return redirect()->route('users.edit', $user)->with('error', 'Minimal harus ada satu super admin yang aktif.');
+            return redirect()->route('users.edit', $user)->with('error', __('users.last_super_admin'));
         }
 
         $user->fill([
@@ -89,7 +91,7 @@ class UserController extends Controller
 
         $user->save();
 
-        return redirect()->route('users.index')->with('success', 'Pengguna berhasil diperbarui.');
+        return redirect()->route('users.index')->with('success', __('users.updated'));
     }
 
     public function destroy(Request $request, User $user): RedirectResponse
@@ -97,28 +99,30 @@ class UserController extends Controller
         $this->ensureCanManage($request->user(), $user);
 
         if ($user->is($request->user())) {
-            return redirect()->route('users.index')->with('error', 'Anda tidak bisa menghapus akun sendiri.');
+            return redirect()->route('users.index')->with('error', __('users.cannot_delete_self'));
         }
 
         if ($user->isAdmin() && User::isLastAdmin($user)) {
-            return redirect()->route('users.index')->with('error', 'Minimal harus ada satu admin yang aktif.');
+            return redirect()->route('users.index')->with('error', __('users.last_admin'));
         }
 
         if ($user->isSuperAdmin() && User::isLastSuperAdmin($user)) {
-            return redirect()->route('users.index')->with('error', 'Minimal harus ada satu super admin yang aktif.');
+            return redirect()->route('users.index')->with('error', __('users.last_super_admin'));
         }
 
         if ($user->transactions()->exists()) {
-            return redirect()->route('users.index')->with('error', 'Akun tidak bisa dihapus karena memiliki riwayat transaksi.');
+            return redirect()->route('users.index')->with('error', __('users.has_transactions'));
         }
 
         $user->delete();
 
-        return redirect()->route('users.index')->with('success', 'Pengguna berhasil dihapus.');
+        return redirect()->route('users.index')->with('success', __('users.deleted'));
     }
 
     /**
      * Role yang boleh ditetapkan oleh pengelola yang sedang masuk.
+     *
+     * Admin hanya boleh mengelola akun kasir. Super admin dapat mengelola semua role.
      *
      * @return array<int, string>
      */
@@ -128,16 +132,24 @@ class UserController extends Controller
             return self::ROLES;
         }
 
-        return [User::ROLE_ADMIN, User::ROLE_KASIR];
+        return [User::ROLE_KASIR];
     }
 
     /**
-     * Hanya super admin yang boleh mengelola akun super admin.
+     * Super admin boleh mengelola semua akun. Admin hanya boleh mengelola akun kasir.
      */
     private function ensureCanManage(User $actor, User $target): void
     {
-        if ($target->isSuperAdmin() && ! $actor->isSuperAdmin()) {
-            abort(403, 'Akun super admin hanya dapat dikelola oleh super admin.');
+        if ($actor->isSuperAdmin()) {
+            return;
+        }
+
+        if ($target->isSuperAdmin()) {
+            abort(403, __('users.super_admin_only'));
+        }
+
+        if (! $target->isKasir()) {
+            abort(403, __('users.admin_manages_kasir_only'));
         }
     }
 

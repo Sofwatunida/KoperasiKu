@@ -51,9 +51,9 @@ class Product extends Model
     public function getStockStatusLabelAttribute(): string
     {
         return match ($this->stock_status) {
-            'habis' => 'Stok habis',
-            'rendah' => 'Stok rendah',
-            default => 'Stok normal',
+            'habis' => __('stock.out'),
+            'rendah' => __('stock.low'),
+            default => __('stock.normal'),
         };
     }
 

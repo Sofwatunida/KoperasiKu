@@ -42,7 +42,7 @@ class AuthController extends Controller
         Auth::login($user);
         $request->session()->regenerate();
 
-        return redirect()->route('dashboard')->with('success', 'Akun berhasil dibuat.');
+        return redirect()->route('dashboard')->with('success', __('login.registered'));
     }
 
     public function store(Request $request): RedirectResponse
@@ -64,7 +64,7 @@ class AuthController extends Controller
 
         if ($identifier === '') {
             throw ValidationException::withMessages([
-                'username' => 'Email atau username wajib diisi.',
+                'username' => __('login.identifier_required'),
             ]);
         }
 
@@ -73,7 +73,7 @@ class AuthController extends Controller
 
         if (! $user || ! Hash::check($credentials['password'], $user->password)) {
             throw ValidationException::withMessages([
-                'username' => 'Email/username atau password salah.',
+                'username' => __('login.invalid_credentials'),
             ]);
         }
 
@@ -90,6 +90,6 @@ class AuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('login')->with('success', 'Anda berhasil keluar.');
+        return redirect()->route('login')->with('success', __('login.logged_out'));
     }
 }

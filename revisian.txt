@@ -1,0 +1,1172 @@
+Saya sedang mengembangkan project Laravel **KoperasiKu / kasir-app**.
+
+KERJAKAN SELURUH TUGAS DI BAWAH INI PADA PROJECT YANG SUDAH ADA.
+
+JANGAN mengganti framework.
+JANGAN melakukan redesign besar-besaran, perbaiki ui agar lebih bagus.
+JANGAN membuat sistem simulasi frontend.
+JANGAN membuat database/tabel baru jika struktur yang sudah ada sebenarnya sudah cukup.
+JANGAN menghapus fitur yang sudah berjalan.
+
+Gunakan struktur, database, model, controller, route, middleware, service, view, dan library yang SUDAH ADA sebisa mungkin.
+
+============================================================
+1. WAJIB: ANALISIS PROJECT TERLEBIH DAHULU
+============================================================
+
+Sebelum mengubah kode, periksa dan pahami:
+
+- versi Laravel
+- PHP
+- composer.json
+- package.json
+- struktur folder
+- model User
+- model Product
+- model Transaction
+- model/detail transaksi
+- migration
+- seeder
+- route web
+- middleware
+- controller
+- service
+- sistem authentication
+- sistem role yang sudah ada
+- halaman login
+- halaman dashboard
+- halaman kasir
+- halaman produk
+- halaman transaksi
+- halaman riwayat
+- JavaScript barcode scanner
+- struktur cart/keranjang
+- proses checkout
+- validasi stok
+- database barcode
+- sistem export jika sudah ada
+
+Cari kode yang berkaitan terlebih dahulu.
+
+Jangan langsung membuat implementasi baru sebelum memahami implementasi lama.
+
+Jika sebuah fitur sudah tersedia, PERBAIKI dan INTEGRASIKAN fitur tersebut daripada membuat fitur kedua yang duplikat.
+
+============================================================
+2. ROLE SYSTEM
+============================================================
+
+Pastikan terdapat 3 role:
+
+1. super_admin
+2. admin
+3. kasir
+
+Gunakan sistem role yang sudah ada jika tersedia.
+
+Jangan membuat tabel role baru jika role dapat menggunakan kolom yang sudah tersedia pada users/profiles.
+
+ROLE HARUS BERASAL DARI DATABASE.
+
+JANGAN menentukan role berdasarkan email.
+
+SALAH:
+if email == "akhwatgroup@gmail.com" maka super_admin
+
+BENAR:
+user.role == "super_admin"
+
+Dengan demikian email dapat diganti kapan saja tanpa mengubah role.
+
+============================================================
+3. AKUN AWAL
+============================================================
+
+Buat/siapkan akun awal berikut.
+
+SUPER ADMIN
+Email:
+akhwatgroup@gmail.com
+
+Password awal:
+akhwatapp
+
+Role:
+super_admin
+
+
+ADMIN
+Email:
+adminku@gmail.com
+
+Password awal:
+adminku08
+
+Role:
+admin
+
+
+KASIR
+Email:
+koperasiku@gmail.com
+
+Password awal:
+koperasikuapp
+
+Role:
+kasir
+
+PERHATIAN:
+
+- Jika akun sudah ada, jangan membuat duplikat.
+- Jika belum ada, buat menggunakan mekanisme Laravel yang benar.
+- Password WAJIB menggunakan Hash Laravel.
+- Jangan menyimpan password plaintext.
+- Jangan hardcode password sebagai mekanisme autentikasi.
+- Role disimpan pada database.
+- Pastikan ketiga akun dapat login.
+- Jangan merusak login/register yang sudah ada.
+
+============================================================
+4. HAK AKSES SUPER ADMIN
+============================================================
+
+Super Admin adalah role tertinggi.
+
+Super Admin dapat:
+
+- mengakses dashboard;
+- mengelola user;
+- mengelola admin;
+- mengelola kasir;
+- mengelola produk;
+- mengelola stok;
+- melihat transaksi;
+- melihat riwayat transaksi;
+- mengelola laporan;
+- export PDF;
+- export Excel;
+- export DOCX;
+- menggunakan fitur sistem lainnya sesuai struktur project.
+
+Super Admin tidak boleh dibatasi oleh middleware admin/kasir.
+
+============================================================
+5. HAK AKSES ADMIN
+============================================================
+
+Admin dapat:
+
+- mengakses dashboard admin;
+- mengelola produk;
+- mengelola stok;
+- melihat transaksi;
+- melihat riwayat;
+- melihat laporan;
+- export PDF;
+- export Excel;
+- export DOCX;
+- mengelola data operasional sesuai sistem yang sudah ada.
+
+Admin tidak boleh mendapatkan hak khusus Super Admin seperti mengubah role Super Admin, kecuali memang sistem existing sudah mengizinkannya.
+
+============================================================
+6. HAK AKSES KASIR
+============================================================
+
+Kasir fokus pada transaksi.
+
+Kasir dapat:
+
+- membuka halaman kasir;
+- mencari produk;
+- menggunakan barcode scanner;
+- menambahkan produk ke keranjang;
+- mengubah quantity;
+- melihat subtotal;
+- melihat total;
+- melakukan checkout;
+- melihat riwayat transaksi sesuai hak akses existing.
+
+Kasir TIDAK boleh:
+
+- mengubah role dirinya;
+- mengakses pengaturan Super Admin;
+- mengelola user jika tidak diizinkan;
+- mengakses fitur admin/super_admin hanya dengan mengetik URL.
+
+Semua pembatasan harus dilakukan SERVER-SIDE menggunakan middleware/authorization.
+
+============================================================
+7. PENGELOLAAN EMAIL DAN PASSWORD
+============================================================
+
+EMAIL DAN PASSWORD TIDAK BOLEH PERMANEN.
+
+Ketiga akun awal hanya merupakan akun awal.
+
+User harus dapat mengganti email dan password melalui:
+
+"Pengaturan Akun"
+
+------------------------------------------------------------
+SUPER ADMIN
+------------------------------------------------------------
+
+Super Admin dapat:
+
+- mengganti email sendiri;
+- mengganti password sendiri;
+- mengelola akun Admin/Kasir sesuai permission;
+- mengganti password Admin/Kasir jika sistem pengelolaan user menyediakan fitur tersebut.
+
+------------------------------------------------------------
+ADMIN
+------------------------------------------------------------
+
+Admin dapat:
+
+- mengganti email sendiri;
+- mengganti password sendiri.
+
+Admin tidak boleh mengubah akun Super Admin kecuali memang diberikan permission.
+
+------------------------------------------------------------
+KASIR
+------------------------------------------------------------
+
+Kasir dapat:
+
+- mengganti email sendiri;
+- mengganti password sendiri.
+
+Kasir tidak boleh mengubah role dirinya sendiri.
+
+============================================================
+8. HALAMAN PENGATURAN AKUN
+============================================================
+
+Tambahkan atau gunakan halaman:
+
+Pengaturan Akun
+
+Tampilkan:
+
+Informasi Akun:
+- Nama
+- Email
+- Role
+
+Ubah Email:
+- Email baru
+- Password saat ini jika diperlukan untuk konfirmasi
+
+Ubah Password:
+- Password saat ini
+- Password baru
+- Konfirmasi password baru
+
+Tombol:
+
+"Simpan Perubahan"
+
+============================================================
+9. VALIDASI EMAIL
+============================================================
+
+Saat email diubah:
+
+- harus berupa email valid;
+- harus unik;
+- tidak boleh sama dengan user lain;
+- simpan ke database;
+- login berikutnya menggunakan email baru.
+
+Jika email sudah digunakan:
+
+"Email sudah digunakan oleh akun lain."
+
+Jangan mengubah email jika validasi gagal.
+
+Role TIDAK boleh berubah ketika email berubah.
+
+Contoh:
+
+Email:
+akhwatgroup@gmail.com
+
+diubah menjadi:
+
+superadminbaru@gmail.com
+
+Role tetap:
+
+super_admin
+
+============================================================
+10. VALIDASI PASSWORD
+============================================================
+
+Password baru:
+
+- wajib di-hash menggunakan Laravel Hash;
+- jangan disimpan plaintext;
+- jangan ditampilkan;
+- password confirmation harus cocok;
+- password lama jangan pernah ditampilkan.
+
+Setelah password berhasil diubah:
+
+User dapat login menggunakan password baru.
+
+============================================================
+11. PERBAIKAN BARCODE SCANNER
+============================================================
+
+Ini adalah bagian penting.
+
+PERIKSA TERLEBIH DAHULU bagaimana barcode scanner saat ini bekerja.
+
+Cari:
+
+- input scanner;
+- event keydown;
+- event keypress;
+- event input;
+- event change;
+- event Enter;
+- route barcode;
+- controller barcode;
+- ProductController;
+- service;
+- model Product;
+- database barcode;
+- cart;
+- transaction;
+- transaction detail;
+- quantity;
+- harga;
+- subtotal;
+- stok;
+- checkout.
+
+Jangan membuat scanner palsu.
+
+Barcode HARUS mencari produk dari DATABASE.
+
+============================================================
+12. ALUR BARCODE
+============================================================
+
+Ketika scanner membaca barcode:
+
+Contoh:
+
+P008
+
+Sistem:
+
+scanner
+→ menerima barcode
+→ mencari produk berdasarkan barcode
+→ mengambil data produk dari database
+→ cek stok
+→ cek apakah produk sudah ada di cart
+→ jika belum ada, tambahkan Qty 1
+→ jika sudah ada, Qty +1
+→ hitung subtotal
+→ hitung total
+→ tampilkan pada cart
+
+Tidak perlu klik tombol "+".
+
+============================================================
+13. BARCODE PRODUK BARU
+============================================================
+
+Jika barcode valid tetapi produk belum ada di keranjang:
+
+Contoh:
+
+Scan P008
+
+Hasil:
+
+Map Plastik
+Qty 1
+
+Produk langsung masuk keranjang.
+
+============================================================
+14. BARCODE PRODUK YANG SAMA
+============================================================
+
+Jika barcode yang sama discan lagi:
+
+JANGAN membuat baris baru.
+
+Contoh:
+
+Scan P008 pertama:
+
+Map Plastik | Qty 1
+
+Scan P008 kedua:
+
+Map Plastik | Qty 2
+
+Scan P008 ketiga:
+
+Map Plastik | Qty 3
+
+Identifikasi produk berdasarkan product_id/barcode sesuai struktur database yang sudah ada.
+
+Pastikan tidak ada duplicate row untuk produk yang sama dalam satu keranjang.
+
+============================================================
+15. SUBTOTAL OTOMATIS
+============================================================
+
+Jika:
+
+harga = 5000
+quantity = 3
+
+maka:
+
+subtotal = 5000 × 3
+subtotal = 15000
+
+Setiap quantity berubah:
+
+- subtotal otomatis berubah;
+- total transaksi otomatis berubah.
+
+Jangan mengandalkan nilai subtotal dari frontend tanpa validasi server.
+
+============================================================
+16. STOK
+============================================================
+
+Quantity TIDAK BOLEH melebihi stok database.
+
+Contoh:
+
+Stok P008 = 5
+
+Scan:
+
+1 → Qty 1
+2 → Qty 2
+3 → Qty 3
+4 → Qty 4
+5 → Qty 5
+6 → TOLAK
+
+Tampilkan:
+
+"Jumlah produk sudah mencapai stok maksimum."
+
+Jangan menambah quantity menjadi 6.
+
+Validasi stok harus dilakukan SERVER-SIDE.
+
+============================================================
+17. BARCODE TIDAK DITEMUKAN
+============================================================
+
+Jika barcode tidak ditemukan:
+
+JANGAN masukkan produk.
+
+Tampilkan:
+
+"Produk dengan barcode tersebut tidak ditemukan."
+
+Setelah itu scanner harus tetap siap digunakan.
+
+============================================================
+18. SCANNER HARUS SIAP TERUS
+============================================================
+
+Scanner harus dapat digunakan berkali-kali tanpa user harus klik input setiap kali.
+
+Contoh:
+
+Scan P001
+→ masuk
+
+Scan P002
+→ masuk
+
+Scan P001
+→ Qty P001 +1
+
+Scan P003
+→ masuk
+
+Scan P004
+→ masuk
+
+Scanner harus tetap menerima input berikutnya.
+
+Jika menggunakan input khusus:
+
+- pertahankan focus;
+- setelah proses selesai, focus kembali ke scanner;
+- jangan kehilangan focus setelah scan;
+- jangan membuat popup yang menghambat scan;
+- jangan membutuhkan refresh halaman.
+
+Targetnya terasa seperti kasir sungguhan.
+
+============================================================
+19. TOMBOL "+" MANUAL
+============================================================
+
+JANGAN menghapus tombol "+".
+
+Tetap pertahankan:
+
+"+" manual
+→ quantity +1
+
+Barcode:
+→ produk otomatis masuk atau quantity +1
+
+Keduanya harus menggunakan validasi stok yang sama.
+
+============================================================
+20. FITUR YANG TIDAK BOLEH RUSAK
+============================================================
+
+Setelah barcode diperbaiki, fitur berikut WAJIB tetap bekerja:
+
+- pencarian produk;
+- tombol tambah manual;
+- tombol kurang jika tersedia;
+- quantity;
+- subtotal;
+- total;
+- keranjang;
+- hapus produk;
+- riwayat transaksi;
+- checkout;
+- stok;
+- database;
+- login;
+- logout;
+- autentikasi;
+- role;
+- middleware;
+- halaman produk;
+- transaksi existing.
+
+Jangan menghapus fitur lama hanya untuk membuat barcode bekerja.
+
+============================================================
+21. DATABASE
+============================================================
+
+Gunakan database existing.
+
+Periksa terlebih dahulu:
+
+- users;
+- profiles jika ada;
+- products;
+- transactions;
+- transaction_items/detail transaksi;
+- barcode;
+- harga;
+- stok;
+- role;
+- relasi model.
+
+JANGAN membuat tabel baru jika tidak diperlukan.
+
+JANGAN mengganti nama kolom existing tanpa alasan teknis.
+
+JANGAN menghapus migration existing.
+
+Jika migration baru benar-benar diperlukan:
+
+- jelaskan alasannya;
+- pastikan tidak menduplikasi struktur existing;
+- gunakan migration Laravel yang benar.
+
+============================================================
+22. EXPORT PDF
+============================================================
+
+Tambahkan export PDF untuk laporan/transaksi menggunakan DATA DATABASE ASLI.
+
+PDF harus:
+
+- memiliki judul;
+- memiliki tanggal/periode jika tersedia;
+- menampilkan transaksi;
+- produk;
+- quantity;
+- harga;
+- subtotal;
+- total;
+- informasi relevan lainnya;
+- tabel rapi;
+- tidak terpotong secara tidak wajar.
+
+Periksa package yang sudah ada sebelum menambahkan package baru.
+
+============================================================
+23. EXPORT EXCEL
+============================================================
+
+Tambahkan export:
+
+.xlsx
+
+Data harus berasal dari database.
+
+Minimal dapat menampilkan:
+
+- tanggal;
+- nomor transaksi jika tersedia;
+- produk;
+- quantity;
+- harga;
+- subtotal;
+- total;
+- data relevan lainnya.
+
+Gunakan package Laravel/PHP yang kompatibel dengan project jika memang diperlukan.
+
+Jangan membuat data dummy.
+
+============================================================
+24. EXPORT DOCX
+============================================================
+
+Tambahkan export:
+
+.docx
+
+Dokumen harus benar-benar dapat dibuka sebagai file Word.
+
+Tampilkan data transaksi/laporan dalam format yang rapi.
+
+Jangan hanya mengganti ekstensi HTML menjadi .docx.
+
+Gunakan library/package yang sesuai dan kompatibel.
+
+============================================================
+25. TOMBOL EXPORT
+============================================================
+
+Tambahkan tombol:
+
+Export PDF
+Export Excel
+Export Word
+
+Tempatkan pada halaman laporan/riwayat yang paling sesuai.
+
+Hak akses mengikuti role.
+
+Super Admin:
+boleh export.
+
+Admin:
+boleh export sesuai hak akses laporan.
+
+Kasir:
+ikuti hak akses transaksi existing; jangan memberikan akses laporan admin jika memang tidak diperbolehkan.
+
+============================================================
+26. PACKAGE
+============================================================
+
+Sebelum install package:
+
+PERIKSA composer.json dan package yang sudah ada.
+
+Jangan install package yang sebenarnya sudah tersedia.
+
+Jika membutuhkan package baru:
+
+- pilih package yang kompatibel;
+- jangan mengganti Laravel;
+- jangan mengganti framework;
+- jangan merusak package existing;
+- jalankan composer update/install sesuai kebutuhan;
+- pastikan project tetap dapat dijalankan.
+
+============================================================
+27. ROUTE
+============================================================
+
+Periksa routes/web.php dan route lainnya.
+
+Jangan membuat route duplikat.
+
+Pastikan:
+
+- route login;
+- route dashboard;
+- route kasir;
+- route produk;
+- route transaksi;
+- route barcode;
+- route export;
+- route pengaturan akun;
+
+menggunakan middleware yang benar.
+
+Jangan hanya menyembunyikan tombol frontend.
+
+User yang tidak memiliki hak akses harus tetap ditolak SERVER-SIDE.
+
+============================================================
+28. KEAMANAN
+============================================================
+
+Pastikan:
+
+- password menggunakan Hash Laravel;
+- role berasal dari database;
+- role tidak dapat dimanipulasi dari frontend;
+- authorization server-side;
+- barcode berasal dari database;
+- product_id divalidasi;
+- stok divalidasi server-side;
+- harga berasal dari database;
+- subtotal dihitung dengan benar;
+- total transaksi tidak dipercaya mentah dari frontend;
+- user tidak dapat membuka route terlarang dengan mengetik URL;
+- email harus unique;
+- password tidak pernah ditampilkan plaintext.
+
+============================================================
+29. JANGAN HARDCODE AKUN SEBAGAI ROLE
+============================================================
+
+JANGAN membuat:
+
+akhwatgroup@gmail.com = super_admin
+adminku@gmail.com = admin
+koperasiku@gmail.com = kasir
+
+sebagai sistem role permanen.
+
+Ketiga akun tersebut hanyalah akun awal.
+
+Sistem harus menggunakan:
+
+user.role
+
+Contoh:
+
+super_admin
+admin
+kasir
+
+Jika email diganti:
+
+superadminbaru@gmail.com
+
+role tetap:
+
+super_admin
+
+Jika password diganti:
+
+password baru
+
+role tetap sama.
+
+============================================================
+30. TESTING LOGIN
+============================================================
+
+Uji:
+
+Akun 1:
+akhwatgroup@gmail.com
+akhwatapp
+→ super_admin
+
+Akun 2:
+adminku@gmail.com
+adminku08
+→ admin
+
+Akun 3:
+koperasiku@gmail.com
+koperasikuapp
+→ kasir
+
+Pastikan tidak ada akun duplikat.
+
+============================================================
+31. TESTING GANTI EMAIL
+============================================================
+
+Pastikan:
+
+- email valid dapat disimpan;
+- email duplicate ditolak;
+- email baru dapat digunakan untuk login;
+- role tidak berubah.
+
+============================================================
+32. TESTING GANTI PASSWORD
+============================================================
+
+Pastikan:
+
+- password lama dapat diverifikasi;
+- password baru tersimpan menggunakan Hash;
+- konfirmasi password harus cocok;
+- password baru dapat digunakan login;
+- password lama tidak dapat digunakan jika memang sistem mengganti password secara langsung.
+
+============================================================
+33. TESTING BARCODE
+============================================================
+
+TEST 1:
+
+Scan barcode valid.
+
+Expected:
+
+- produk ditemukan;
+- produk masuk cart;
+- Qty = 1.
+
+TEST 2:
+
+Scan barcode sama lagi.
+
+Expected:
+
+- tidak membuat row baru;
+- Qty = 2.
+
+TEST 3:
+
+Scan barcode sama lagi.
+
+Expected:
+
+- Qty = 3.
+
+TEST 4:
+
+Scan produk berbeda.
+
+Expected:
+
+- menjadi row baru.
+
+TEST 5:
+
+Scan barcode tidak ditemukan.
+
+Expected:
+
+- produk tidak masuk;
+- muncul notifikasi.
+
+TEST 6:
+
+Scan sampai stok maksimum.
+
+Expected:
+
+- quantity tidak melebihi stok;
+- muncul peringatan.
+
+TEST 7:
+
+Scan berkali-kali dengan cepat.
+
+Expected:
+
+- scanner tetap aktif;
+- tidak kehilangan focus;
+- semua scan diproses dengan benar.
+
+============================================================
+34. TESTING CART
+============================================================
+
+Pastikan:
+
+- tambah manual tetap bekerja;
+- barcode tetap bekerja;
+- quantity benar;
+- subtotal benar;
+- total benar;
+- hapus item tetap bekerja;
+- checkout tetap bekerja;
+- stok tetap berkurang sesuai transaksi.
+
+============================================================
+35. TESTING EXPORT
+============================================================
+
+Uji:
+
+Export PDF
+→ file berhasil dibuat
+→ file dapat dibuka
+→ data benar.
+
+Export Excel
+→ file .xlsx
+→ file dapat dibuka
+→ data benar.
+
+Export Word
+→ file .docx
+→ file dapat dibuka
+→ data benar.
+
+============================================================
+36. JANGAN MERUSAK UI EXISTING
+============================================================
+
+Pertahankan desain KoperasiKu yang sudah ada.
+
+Jangan melakukan redesign besar-besaran.
+
+Fokus pada:
+
+- fungsi;
+- integrasi;
+- keamanan;
+- role;
+- barcode;
+- cart;
+- transaksi;
+- export.
+
+Jika harus menambahkan tombol/menu baru, sesuaikan dengan desain existing.
+
+============================================================
+37. JIKA TERDAPAT ERROR
+============================================================
+
+Jangan menyembunyikan error.
+
+Jika error:
+
+1. baca error;
+2. cari penyebab;
+3. periksa file;
+4. perbaiki akar masalah;
+5. jalankan kembali test.
+
+Jangan menggunakan workaround yang merusak arsitektur.
+
+============================================================
+38. HASIL AKHIR WAJIB DILAPORKAN
+============================================================
+
+Setelah selesai, tampilkan laporan:
+
+A. FILE YANG DIUBAH
+
+Contoh:
+
+- app/Models/User.php
+- app/Http/Controllers/...
+- resources/views/...
+- routes/web.php
+- database/seeders/...
+- composer.json
+- package lain jika ada
+
+Jangan hanya menulis nama folder.
+Tuliskan file yang benar-benar diubah.
+
+B. PERUBAHAN SETIAP FILE
+
+Contoh:
+
+User.php
+→ menambahkan/menyesuaikan role.
+
+Controller...
+→ memperbaiki barcode.
+
+View...
+→ menambahkan tombol export.
+
+C. ROLE
+
+Jelaskan:
+
+Super Admin:
+...
+
+Admin:
+...
+
+Kasir:
+...
+
+D. BARCODE
+
+Jelaskan alur:
+
+Scanner
+→ barcode
+→ database
+→ product
+→ cek stok
+→ cart
+→ quantity
+→ subtotal
+→ total
+
+E. EXPORT
+
+Jelaskan:
+
+PDF:
+...
+
+Excel:
+...
+
+DOCX:
+...
+
+F. DATABASE
+
+Jelaskan apakah database berubah.
+
+Jika tidak ada perubahan:
+"Struktur database existing digunakan."
+
+Jika ada migration:
+jelaskan alasan dan file migration.
+
+G. PACKAGE
+
+Sebutkan package baru jika ada.
+
+Jelaskan alasan penggunaannya.
+
+H. AKUN
+
+Tampilkan bahwa akun awal berhasil dibuat/diupdate:
+
+super_admin
+admin
+kasir
+
+Tetapi jangan menampilkan password setelah proses selesai jika tidak diperlukan.
+
+I. TESTING
+
+Tampilkan hasil:
+
+[PASS] Login Super Admin
+[PASS] Login Admin
+[PASS] Login Kasir
+[PASS] Ganti Email
+[PASS] Ganti Password
+[PASS] Barcode
+[PASS] Duplicate barcode quantity
+[PASS] Validasi stok
+[PASS] Cart
+[PASS] Checkout
+[PASS] PDF
+[PASS] Excel
+[PASS] DOCX
+
+Jika ada yang belum berhasil, tulis:
+
+[FAILED]
+
+dan jelaskan penyebabnya.
+
+============================================================
+39. ATURAN PALING PENTING
+============================================================
+
+1. Jangan mengarang struktur database.
+2. Jangan mengarang nama kolom.
+3. Jangan mengarang route.
+4. Jangan menghapus fitur existing.
+5. Jangan membuat tabel baru tanpa alasan.
+6. Jangan hardcode role berdasarkan email.
+7. Jangan menyimpan password plaintext.
+8. Jangan membuat barcode dummy.
+9. Jangan membuat data transaksi dummy.
+10. Gunakan database asli.
+11. Validasi stok di server.
+12. Validasi role di server.
+13. Pertahankan desain existing.
+14. Jangan mengganti framework.
+15. Jangan melakukan redesign besar.
+16. Periksa kode terlebih dahulu sebelum mengedit.
+17. Setelah mengedit, lakukan testing.
+18. Jika menemukan masalah yang berkaitan dengan implementasi sebelumnya, perbaiki akar masalahnya.
+19. Jangan mengatakan "selesai" jika fitur belum benar-benar terintegrasi.
+20. Di akhir, jelaskan FILE APA SAJA yang berubah dan APA yang diperbaiki.
+
+============================================================
+TARGET AKHIR
+============================================================
+
+KoperasiKu harus bekerja seperti sistem kasir sungguhan:
+
+LOGIN
+↓
+ROLE TERVALIDASI
+↓
+DASHBOARD SESUAI ROLE
+↓
+KASIR MEMBUKA HALAMAN KASIR
+↓
+SCAN BARCODE
+↓
+BARCODE DICARI KE DATABASE
+↓
+PRODUK DITEMUKAN
+↓
+CEK STOK
+↓
+PRODUK MASUK KERANJANG
+↓
+SCAN BARCODE SAMA
+↓
+QUANTITY +1
+↓
+SUBTOTAL OTOMATIS
+↓
+TOTAL OTOMATIS
+↓
+CHECKOUT
+↓
+STOK DIPERBARUI
+↓
+TRANSAKSI TERSIMPAN
+↓
+RIWAYAT TRANSAKSI
+↓
+ADMIN/SUPER ADMIN MELIHAT LAPORAN
+↓
+EXPORT PDF / EXCEL / DOCX
+
+DAN:
+
+SUPER ADMIN / ADMIN / KASIR
+dapat mengganti email dan password sesuai hak akses,
+tanpa mengubah role.
+
+Mulai dengan MENGANALISIS PROJECT TERLEBIH DAHULU.
+Jangan langsung menulis kode sebelum memahami struktur project yang sudah ada.

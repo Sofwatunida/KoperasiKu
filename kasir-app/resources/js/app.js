@@ -1,3 +1,35 @@
+import Swal from 'sweetalert2';
+
+/**
+ * Terjemahan untuk pesan yang dibangun di sisi klien. Disuntikkan oleh layout
+ * (window.KoperasiKu) dan dipakai sebagai fallback berbahasa Indonesia.
+ */
+const appI18n = {
+	confirm: 'Konfirmasi',
+	yesContinue: 'Ya, lanjutkan',
+	cancel: 'Batal',
+	showPassword: 'Tampilkan password',
+	hidePassword: 'Sembunyikan password',
+	increase: 'Tambah :name',
+	decrease: 'Kurangi :name',
+	remove: 'Hapus',
+	stockMax: 'Jumlah produk sudah mencapai stok maksimum.',
+	scanError: 'Barcode tidak dapat diproses.',
+	scanFailed: 'Gagal menghubungi server. Coba scan ulang.',
+	resetTitle: 'Apakah Anda yakin akan mereset?',
+	resetHtml: 'Seluruh <b>riwayat transaksi</b> dan <b>semua produk</b> akan dihapus permanen.<br>Ketik <b>RESET</b> untuk melanjutkan.',
+	resetPlaceholder: 'Ketik RESET',
+	resetConfirm: 'Ya, reset sekarang',
+	resetValidator: 'Ketik RESET (huruf besar) untuk melanjutkan.',
+	...window.KoperasiKu?.i18n,
+};
+
+const translate = (template, replacements = {}) =>
+	Object.entries(replacements).reduce(
+		(text, [key, value]) => text.replace(`:${key}`, value),
+		template,
+	);
+
 const sidebar = document.querySelector('#app-sidebar');
 const sidebarToggle = document.querySelector('#sidebar-toggle');
 const sidebarBackdrop = document.querySelector('#sidebar-backdrop');
@@ -15,14 +47,45 @@ sidebarToggle?.addEventListener('click', () => {
 });
 sidebarBackdrop?.addEventListener('click', () => setSidebarOpen(false));
 
+// Dropdown preferensi (tema & bahasa)
+document.querySelectorAll('[data-dropdown]').forEach((dropdown) => {
+	const toggle = dropdown.querySelector('[data-dropdown-toggle]');
+	const menu = dropdown.querySelector('[data-dropdown-menu]');
+
+	toggle?.addEventListener('click', (event) => {
+		event.stopPropagation();
+		const open = !menu.classList.toggle('hidden');
+		toggle.setAttribute('aria-expanded', String(open));
+	});
+
+	document.addEventListener('click', (event) => {
+		if (dropdown.contains(event.target)) return;
+
+		menu?.classList.add('hidden');
+		toggle?.setAttribute('aria-expanded', 'false');
+	});
+});
+
+const passwordIcons = {
+	eye: '<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="3"/>',
+	eyeOff: '<path d="M3 3l18 18"/><path d="M10.6 5.1A10.9 10.9 0 0 1 12 5c6 0 9.5 7 9.5 7a17.7 17.7 0 0 1-3.3 4.3M6.6 6.7A17.6 17.6 0 0 0 2.5 12s3.5 7 9.5 7a10.5 10.5 0 0 0 4.3-.9"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/>',
+};
+
 document.querySelectorAll('[data-password-toggle]').forEach((toggle) => {
+	const icon = toggle.querySelector('[data-password-icon]');
+
 	toggle.addEventListener('click', () => {
 		const input = document.querySelector(toggle.dataset.passwordToggle);
 		if (!input) return;
 
-		const showing = input.type === 'password';
-		input.type = showing ? 'text' : 'password';
-		toggle.setAttribute('aria-label', showing ? 'Sembunyikan password' : 'Tampilkan password');
+		const willShow = input.type === 'password';
+		input.type = willShow ? 'text' : 'password';
+		toggle.setAttribute('aria-label', willShow ? appI18n.hidePassword : appI18n.showPassword);
+		toggle.setAttribute('title', willShow ? appI18n.hidePassword : appI18n.showPassword);
+
+		if (icon) {
+			icon.innerHTML = willShow ? passwordIcons.eyeOff : passwordIcons.eye;
+		}
 	});
 });
 
@@ -97,7 +160,7 @@ if (cashier) {
 			const payload = await response.json();
 
 			if (!response.ok) {
-				showScanMessage(payload.message ?? 'Barcode tidak dapat diproses.', 'error');
+				showScanMessage(payload.message ?? appI18n.scanError, 'error');
 				return;
 			}
 
@@ -121,7 +184,7 @@ if (cashier) {
 			showScanMessage(payload.message, 'success');
 			renderCart();
 		} catch (error) {
-			showScanMessage('Gagal menghubungi server. Coba scan ulang.', 'error');
+			showScanMessage(appI18n.scanFailed, 'error');
 		}
 	}
 
@@ -155,14 +218,14 @@ if (cashier) {
 			decrement.className = 'quantity-button';
 			decrement.type = 'button';
 			decrement.textContent = '−';
-			decrement.setAttribute('aria-label', `Kurangi ${item.name}`);
+			decrement.setAttribute('aria-label', translate(appI18n.decrease, { name: item.name }));
 			decrement.addEventListener('click', () => changeQuantity(item.id, -1));
 			quantity.className = 'min-w-5 text-center text-sm tabular';
 			quantity.textContent = String(item.quantity);
 			increment.className = 'quantity-button';
 			increment.type = 'button';
 			increment.textContent = '+';
-			increment.setAttribute('aria-label', `Tambah ${item.name}`);
+			increment.setAttribute('aria-label', translate(appI18n.increase, { name: item.name }));
 			increment.disabled = item.quantity >= item.stock;
 			increment.addEventListener('click', () => changeQuantity(item.id, 1));
 			quantityControl.append(decrement, quantity, increment);
@@ -173,7 +236,7 @@ if (cashier) {
 			subtotalCell.textContent = formatRupiah(item.price * item.quantity);
 			remove.className = 'btn-ghost btn-sm text-danger';
 			remove.type = 'button';
-			remove.textContent = 'Hapus';
+			remove.textContent = appI18n.remove;
 			remove.addEventListener('click', () => {
 				cart.delete(item.id);
 				renderCart();
@@ -228,7 +291,7 @@ if (cashier) {
 				cart.set(id, item);
 				renderCart();
 			} else {
-				showScanMessage('Jumlah produk sudah mencapai stok maksimum.', 'error');
+				showScanMessage(appI18n.stockMax, 'error');
 			}
 		});
 	});
@@ -253,4 +316,124 @@ if (cashier) {
 	});
 	renderCart();
 	focusScanner();
+}
+
+const bulkSelectAll = document.querySelector('[data-select-all]');
+const bulkCheckboxes = document.querySelectorAll('[data-product-checkbox]');
+const bulkButton = document.querySelector('[data-bulk-delete]');
+const bulkCount = document.querySelector('[data-selected-count]');
+
+if (bulkSelectAll && bulkCheckboxes.length > 0) {
+	const updateBulkState = () => {
+		const selected = [...bulkCheckboxes].filter((checkbox) => checkbox.checked).length;
+
+		if (bulkCount) bulkCount.textContent = String(selected);
+		if (bulkButton) bulkButton.disabled = selected === 0;
+
+		bulkSelectAll.checked = selected > 0 && selected === bulkCheckboxes.length;
+		bulkSelectAll.indeterminate = selected > 0 && selected < bulkCheckboxes.length;
+	};
+
+	bulkSelectAll.addEventListener('change', () => {
+		bulkCheckboxes.forEach((checkbox) => {
+			checkbox.checked = bulkSelectAll.checked;
+		});
+
+		updateBulkState();
+	});
+
+	bulkCheckboxes.forEach((checkbox) => checkbox.addEventListener('change', updateBulkState));
+
+	updateBulkState();
+}
+
+/*
+ * SweetAlert2: konfirmasi tindakan (hapus, reset, dsb.) dan notifikasi flash.
+ * Tema mengikuti mode terang/gelap yang aktif pada <html data-theme>.
+ */
+const sweetAlertDefaults = {
+	theme: document.documentElement.dataset.theme === 'dark' ? 'dark' : 'default',
+	confirmButtonColor: '#2563eb',
+	cancelButtonColor: '#64748b',
+	reverseButtons: true,
+};
+
+document.querySelectorAll('form[data-confirm]').forEach((form) => {
+	const tone = form.dataset.confirmTone ?? 'primary';
+
+	form.addEventListener('submit', (event) => {
+		if (form.dataset.confirmed === 'true') {
+			return;
+		}
+
+		event.preventDefault();
+
+		Swal.fire({
+			...sweetAlertDefaults,
+			title: form.dataset.confirmTitle ?? appI18n.confirm,
+			text: form.dataset.confirm,
+			icon: tone === 'danger' ? 'warning' : 'question',
+			showCancelButton: true,
+			confirmButtonText: form.dataset.confirmButton ?? appI18n.yesContinue,
+			cancelButtonText: appI18n.cancel,
+			confirmButtonColor: tone === 'danger' ? '#dc2626' : sweetAlertDefaults.confirmButtonColor,
+		}).then((result) => {
+			if (result.isConfirmed) {
+				form.dataset.confirmed = 'true';
+				form.submit();
+			}
+		});
+	});
+});
+
+const resetTrigger = document.querySelector('[data-reset-trigger]');
+
+if (resetTrigger) {
+	const resetForm = resetTrigger.closest('form');
+	const confirmationInput = resetForm?.querySelector('input[name="confirmation"]');
+
+	resetTrigger.addEventListener('click', () => {
+		Swal.fire({
+			...sweetAlertDefaults,
+			title: appI18n.resetTitle,
+			html: appI18n.resetHtml,
+			icon: 'warning',
+			input: 'text',
+			inputPlaceholder: appI18n.resetPlaceholder,
+			inputAttributes: { autocapitalize: 'characters', autocomplete: 'off' },
+			showCancelButton: true,
+			confirmButtonText: appI18n.resetConfirm,
+			cancelButtonText: appI18n.cancel,
+			confirmButtonColor: '#dc2626',
+			focusCancel: true,
+			inputValidator: (value) => (value === 'RESET' ? null : appI18n.resetValidator),
+		}).then((result) => {
+			if (result.isConfirmed && resetForm && confirmationInput) {
+				confirmationInput.value = result.value;
+				resetForm.submit();
+			}
+		});
+	});
+}
+
+const flashNotices = document.querySelectorAll('[data-flash]');
+
+if (flashNotices.length > 0) {
+	const Toast = Swal.mixin({
+		toast: true,
+		position: 'top-end',
+		showConfirmButton: false,
+		timer: 4000,
+		timerProgressBar: true,
+		didOpen: (toast) => {
+			toast.addEventListener('mouseenter', Swal.stopTimer);
+			toast.addEventListener('mouseleave', Swal.resumeTimer);
+		},
+	});
+
+	flashNotices.forEach((notice) => {
+		const type = notice.dataset.flash === 'error' ? 'error' : 'success';
+		notice.classList.add('hidden');
+		Toast.fire({ icon: type, title: notice.textContent.trim() });
+	});
 }

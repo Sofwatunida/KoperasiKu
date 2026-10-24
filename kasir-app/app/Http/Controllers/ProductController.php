@@ -45,7 +45,7 @@ class ProductController extends Controller
 
         Product::create($data);
 
-        return redirect()->route('products.index')->with('success', 'Produk berhasil ditambahkan.');
+        return redirect()->route('products.index')->with('success', __('products.created'));
     }
 
     public function edit(Product $product): View
@@ -62,19 +62,67 @@ class ProductController extends Controller
 
         $product->update($data);
 
-        return redirect()->route('products.index')->with('success', 'Produk berhasil diperbarui.');
+        return redirect()->route('products.index')->with('success', __('products.updated'));
     }
 
     public function destroy(Product $product): RedirectResponse
     {
         if ($product->transactionDetails()->exists()) {
             return redirect()->route('products.index')
-                ->with('error', 'Produk tidak bisa dihapus karena sudah memiliki riwayat transaksi.');
+                ->with('error', __('products.delete_blocked'));
         }
 
         $product->delete();
 
-        return redirect()->route('products.index')->with('success', 'Produk berhasil dihapus.');
+        return redirect()->route('products.index')->with('success', __('products.deleted'));
+    }
+
+    /**
+     * Menghapus beberapa produk sekaligus dari produk yang dipilih.
+     * Produk yang sudah memiliki riwayat transaksi dilewati, sama seperti hapus satuan.
+     */
+    public function bulkDestroy(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'product_ids' => ['required', 'array', 'min:1'],
+            'product_ids.*' => ['integer', 'exists:products,id'],
+        ], [
+            'product_ids.required' => __('products.bulk_min'),
+            'product_ids.min' => __('products.bulk_min'),
+            'product_ids.array' => __('products.bulk_min'),
+            'product_ids.*.exists' => __('products.bulk_missing'),
+        ]);
+
+        $products = Product::query()->whereIn('id', $data['product_ids'])->get();
+
+        $deleted = 0;
+        $blocked = 0;
+
+        foreach ($products as $product) {
+            if ($product->transactionDetails()->exists()) {
+                $blocked++;
+
+                continue;
+            }
+
+            $product->delete();
+            $deleted++;
+        }
+
+        if ($deleted === 0) {
+            return redirect()->route('products.index')->with(
+                'error',
+                $blocked > 0 ? __('products.bulk_all_blocked') : __('products.bulk_none_deleted')
+            );
+        }
+
+        $message = __('products.bulk_success', ['count' => $deleted]);
+
+        if ($blocked > 0) {
+            $message .= ' '.__('products.bulk_blocked', ['count' => $blocked]);
+        }
+
+        return redirect()->route('products.index')->with('success', $message);
     }
 
     /**

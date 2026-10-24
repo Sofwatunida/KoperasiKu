@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\PreferenceController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportController;
@@ -10,6 +11,19 @@ use App\Http\Controllers\SettingController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
+
+/*
+|--------------------------------------------------------------------------
+| Preferensi Tampilan (bahasa & tema)
+|--------------------------------------------------------------------------
+| Dapat diakses tamu maupun pengguna login karena tersimpan di cookie.
+*/
+Route::get('bahasa/{locale}', [PreferenceController::class, 'language'])
+    ->where('locale', 'id|en')
+    ->name('language.switch');
+Route::get('tema/{theme}', [PreferenceController::class, 'theme'])
+    ->where('theme', 'light|dark')
+    ->name('theme.switch');
 
 /*
 |--------------------------------------------------------------------------
@@ -33,10 +47,15 @@ Route::middleware('guest')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::post('logout', [AuthController::class, 'destroy'])->name('logout');
 
+    // Sembunyikan/tampilkan sidebar (tersimpan di cookie)
+    Route::get('sidebar/atur', [PreferenceController::class, 'sidebar'])->name('sidebar.toggle');
+
     Route::get('/', fn () => redirect()->route('dashboard'));
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // Manajemen Produk (CRUD)
+    Route::delete('produk/bulk', [ProductController::class, 'bulkDestroy'])->name('products.bulk-destroy');
+
     Route::resource('produk', ProductController::class)
         ->parameters(['produk' => 'product'])
         ->except(['show'])
@@ -67,9 +86,14 @@ Route::middleware('auth')->group(function () {
             ->names('users');
     });
 
-    // Pengaturan Akun
-    Route::get('pengaturan', [SettingController::class, 'index'])->name('settings.index');
-    Route::put('pengaturan', [SettingController::class, 'update'])->name('settings.update');
+    // Pengaturan Akun (khusus super admin)
+    Route::middleware('super_admin')->group(function () {
+        Route::get('pengaturan', [SettingController::class, 'index'])->name('settings.index');
+        Route::put('pengaturan', [SettingController::class, 'update'])->name('settings.update');
+        Route::get('pengaturan/backup', [SettingController::class, 'backup'])->name('settings.backup');
+        Route::post('pengaturan/import', [SettingController::class, 'import'])->name('settings.import');
+        Route::delete('pengaturan/reset', [SettingController::class, 'reset'])->name('settings.reset');
+    });
 
     // Profil (Breeze-compatible)
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
